@@ -18,3 +18,6 @@ __pycache__/
 
 # Config file
 config.py
+
+# CSV files
+*.csv
