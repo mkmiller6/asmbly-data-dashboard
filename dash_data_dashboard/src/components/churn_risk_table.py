@@ -1,9 +1,16 @@
 """Dash Data Table containing member info and ranked churn risk"""
 
+import math
 import polars as pl
 from dash import html, Dash, dash_table, Input, Output
 import dash_mantine_components as dmc
 from .ids import Ids
+from . import (
+    churn_table_sort_direction,
+    churn_table_sort_by,
+    churn_table_emailed_toggle,
+    churn_table_search,
+)
 
 PAGE_SIZE = 15
 
@@ -14,11 +21,13 @@ def render(app: Dash, source: pl.LazyFrame) -> html.Div:
     @app.callback(
         Output(Ids.CHURN_DATA_TABLE, "data"),
         Output(Ids.CHURN_DATA_TABLE, "columns"),
+        Output(Ids.CHURN_DATA_TABLE, "page_count"),
         Input(Ids.CHURN_DATA_TABLE, "page_current"),
         Input(Ids.CHURN_DATA_TABLE, "page_size"),
         Input(Ids.CHURN_DATA_TABLE_FILTER, "checked"),
         Input(Ids.CHURN_DATA_TABLE_SORT_BY, "value"),
         Input(Ids.CHURN_DATA_TABLE_SORT_DIR, "value"),
+        Input(Ids.CHURN_DATA_TABLE_SEARCH, "value"),
     )
     def update_churn_table(
         page_current: int,
@@ -26,80 +35,56 @@ def render(app: Dash, source: pl.LazyFrame) -> html.Div:
         show_emailed: bool,
         sort_by: str,
         sort_dir: str,
+        search: str,
     ) -> html.Div:
 
-        filtered_source = (
-            source.sort(pl.col(sort_by), descending=sort_dir == "desc").collect().lazy()
+        search = search.lower()
+
+        filtered_source = source.sort(
+            pl.col(sort_by), descending=sort_dir == "desc"
+        ).filter(
+            pl.col("Name").str.to_lowercase().str.contains(search, literal=True)
+            | pl.col("Email Address").str.contains(search, literal=True)
+            | pl.col("Neon ID").str.contains(search, literal=True)
         )
         if not show_emailed:
             filtered_source = filtered_source.filter(pl.col("Emailed") is False)
 
-        filtered_source = filtered_source.slice(
+        final_df = filtered_source.slice(
             offset=page_current * page_size, length=page_size
         ).collect()
 
-        data = filtered_source.to_dicts()
+        data = final_df.to_dicts()
 
         cols = [{"name": i, "id": i} for i in filtered_source.columns]
 
-        return data, cols
+        items = filtered_source.select(pl.len()).collect().item()
+
+        page_count = 1 if items == 0 else math.ceil(items / PAGE_SIZE)
+
+        return data, cols, page_count
 
     return html.Div(
         id=Ids.CHURN_DATA_TABLE_CONTAINER,
         children=[
-            html.H3("Churn Risk Table"),
+            dmc.Text("Churn Risk", size="lg", mb="15px"),
+            dmc.Divider(mb="15px"),
             dmc.Group(
                 position="left",
+                align="end",
                 children=[
-                    dmc.Switch(
-                        id=Ids.CHURN_DATA_TABLE_FILTER,
-                        label="Show members who have been emailed",
-                        color="indigo",
-                        checked=True,
-                        mb="10px",
-                    ),
-                    dmc.Select(
-                        id=Ids.CHURN_DATA_TABLE_SORT_BY,
-                        placeholder="Sort by",
-                        label="Sort by",
-                        value="Churn Risk",
-                        data=[
-                            {"value": "Churn Risk", "label": "Churn Risk"},
-                            {"value": "Name", "label": "Name"},
-                            {"value": "Email Address", "label": "Email Address"},
-                            {"value": "Emailed", "label": "Emailed"},
-                            {"value": "Neon ID", "label": "Neon ID"},
-                        ],
-                        style={
-                            "width": "200px",
-                            "marginBottom": "10px",
-                            "marginLeft": "10px",
-                        },
-                    ),
-                    dmc.Select(
-                        id=Ids.CHURN_DATA_TABLE_SORT_DIR,
-                        placeholder="Sort direction",
-                        label="Sort direction",
-                        value="desc",
-                        data=[
-                            {"value": "asc", "label": "Asc"},
-                            {"value": "desc", "label": "Desc"},
-                        ],
-                        style={
-                            "width": "200px",
-                            "marginBottom": "10px",
-                            "marginLeft": "10px",
-                        },
-                    ),
+                    churn_table_sort_by.render(),
+                    churn_table_sort_direction.render(),
+                    churn_table_search.render(),
+                    churn_table_emailed_toggle.render(),
                 ],
-                m="10px",
+                mb="15px",
             ),
             dash_table.DataTable(
                 id=Ids.CHURN_DATA_TABLE,
                 page_current=0,
                 page_size=PAGE_SIZE,
                 page_action="custom",
-                editable=True,
                 style_table={"overflowX": "auto"},
                 style_cell={
                     "whiteSpace": "normal",
@@ -122,4 +107,5 @@ def render(app: Dash, source: pl.LazyFrame) -> html.Div:
                 row_selectable="multi",
             ),
         ],
+        style={"maxWidth": "65%"},
     )

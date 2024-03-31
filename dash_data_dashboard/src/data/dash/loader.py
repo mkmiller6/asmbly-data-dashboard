@@ -15,7 +15,7 @@ def load_churn_data(path: str) -> pl.LazyFrame:
             + " "
             + pl.col("last_name").str.to_titlecase()
         ).alias("Name"),
-        pl.col("email").alias("Email Address"),
+        pl.col("email").str.to_lowercase().alias("Email Address"),
         pl.col("risk_score").alias("Churn Risk"),
         pl.lit(True).alias("Emailed"),
     )

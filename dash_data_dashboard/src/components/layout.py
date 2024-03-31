@@ -3,7 +3,7 @@
 import polars as pl
 from dash import html, Dash
 import dash_mantine_components as dmc
-from . import churn_risk_table
+from . import churn_risk_table, header
 
 
 def create_layout(app: Dash, source: pl.LazyFrame) -> html.Div:
@@ -23,12 +23,17 @@ def create_layout(app: Dash, source: pl.LazyFrame) -> html.Div:
         withGlobalStyles=True,
         withNormalizeCSS=True,
         children=[
+            header.render(app),
             dmc.SimpleGrid(
                 cols=1,
                 children=[
                     churn_risk_table.render(app, source),
                 ],
-                m="20px",
-            )
+                style={
+                    "margin": "20px",
+                    "display": "flex",
+                    "justifyContent": "center",
+                },
+            ),
         ],
     )
