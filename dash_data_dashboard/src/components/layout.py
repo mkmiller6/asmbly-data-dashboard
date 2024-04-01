@@ -24,16 +24,19 @@ def create_layout(app: Dash, source: pl.LazyFrame) -> html.Div:
         withNormalizeCSS=True,
         children=[
             header.render(app),
-            dmc.SimpleGrid(
-                cols=1,
+            dmc.Grid(
+                mt=75,
+                gutter="md",
+                mx=20,
+                className="grid-container",
                 children=[
-                    churn_risk_table.render(app, source),
+                    dmc.Col(
+                        span=8,
+                        children=[
+                            churn_risk_table.render(app, source),
+                        ],
+                    )
                 ],
-                style={
-                    "margin": "20px",
-                    "display": "flex",
-                    "justifyContent": "center",
-                },
             ),
         ],
     )

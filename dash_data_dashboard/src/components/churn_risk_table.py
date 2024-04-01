@@ -10,6 +10,7 @@ from . import (
     churn_table_sort_by,
     churn_table_emailed_toggle,
     churn_table_search,
+    churn_table_submit,
 )
 
 PAGE_SIZE = 15
@@ -48,7 +49,7 @@ def render(app: Dash, source: pl.LazyFrame) -> html.Div:
             | pl.col("Neon ID").str.contains(search, literal=True)
         )
         if not show_emailed:
-            filtered_source = filtered_source.filter(pl.col("Emailed") is False)
+            filtered_source = filtered_source.filter(pl.col("Emailed") == "No")
 
         final_df = filtered_source.slice(
             offset=page_current * page_size, length=page_size
@@ -56,7 +57,18 @@ def render(app: Dash, source: pl.LazyFrame) -> html.Div:
 
         data = final_df.to_dicts()
 
-        cols = [{"name": i, "id": i} for i in filtered_source.columns]
+        cols = [
+            {"name": i, "id": i}
+            for i in filtered_source.select(pl.all().exclude("Emailed")).columns
+        ]
+
+        cols.append(
+            {
+                "name": "Emailed",
+                "id": "Emailed",
+                "presentation": "dropdown",
+            }
+        )
 
         items = filtered_source.select(pl.len()).collect().item()
 
@@ -84,6 +96,12 @@ def render(app: Dash, source: pl.LazyFrame) -> html.Div:
                 id=Ids.CHURN_DATA_TABLE,
                 page_current=0,
                 page_size=PAGE_SIZE,
+                editable=True,
+                dropdown={
+                    "Emailed": {
+                        "options": [{"label": i, "value": i} for i in ["Yes", "No"]],
+                    }
+                },
                 page_action="custom",
                 style_table={"overflowX": "auto"},
                 style_cell={
@@ -104,8 +122,7 @@ def render(app: Dash, source: pl.LazyFrame) -> html.Div:
                     "fontFamily": "'Inter', sans-serif",
                     "fontSize": "20px",
                 },
-                row_selectable="multi",
             ),
+            churn_table_submit.render(app),
         ],
-        style={"maxWidth": "65%"},
     )
