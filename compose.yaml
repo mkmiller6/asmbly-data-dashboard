@@ -19,12 +19,7 @@ services:
     secrets:
       - postgres-user
       - postgres-password
-    logging:
-      driver: awslogs
-      options:
-        awslogs-group: ${AWS_LOG_GROUP}
-        awslogs-region: ${AWS_REGION}
-        awslogs-stream: gunicorn-server
+      - postgres-db
   db:
     image: postgres:16
     restart: unless-stopped
@@ -33,6 +28,7 @@ services:
     environment:
       POSTGRES_USER_FILE: /run/secrets/postgres-user
       POSTGRES_PASSWORD_FILE: /run/secrets/postgres-password
+      POSTGRES_DB_FILE: /run/secrets/postgres-db
       TZ: "America/Chicago"
       PGTZ: "America/Chicago"
     volumes:
@@ -41,59 +37,20 @@ services:
       - postgres-user
       - postgres-password
   redis:
-    image: redis
+    image: redis:7.2.4
     restart: unless-stopped
     networks:
       - backend
     environment:
       TZ: "America/Chicago"
-  cron:
-    env_file:
-      - .env
-    build: ./cron-service
-    depends_on:
-      - db
-    secrets:
-      - postgres-user
-      - postgres-password
-    restart: unless-stopped
-    networks:
-      - backend
-    environment:
-      TZ: "America/Chicago"
-    logging:
-      driver: awslogs
-      options:
-        awslogs-group: ${AWS_LOG_GROUP}
-        awslogs-region: ${AWS_REGION}
-        awslogs-stream: cron
-  caddy:
-    image: caddy:2.7.5
-    env_file:
-      - .env
-    restart: unless-stopped
-    depends_on:
-      - app
-    environment:
-      TZ: "America/Chicago"
-    networks:
-      - frontend
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./caddy:/data
-      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
 
 volumes:
   postgres:
-  caddy_data:
-  caddy_config:
 
 secrets:
   postgres-user: 
     file: ./secrets/postgres-user.txt
   postgres-password: 
     file: ./secrets/postgres-password.txt
+  postgres-db:
+    file: ./secrets/postgres-db.txt

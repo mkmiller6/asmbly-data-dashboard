@@ -1,0 +1,51 @@
+services:
+  app:
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: ${AWS_LOG_GROUP}
+        awslogs-region: ${AWS_REGION}
+        awslogs-stream: gunicorn-server
+  caddy:
+    image: caddy:2.7.5
+    env_file:
+      - .env
+    restart: unless-stopped
+    depends_on:
+      - app
+    environment:
+      TZ: "America/Chicago"
+    networks:
+      - frontend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy:/data
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+  cron:
+    env_file:
+      - .env
+    build: ./cron-service
+    depends_on:
+      - db
+    secrets:
+      - postgres-user
+      - postgres-password
+    restart: unless-stopped
+    networks:
+      - backend
+    environment:
+      TZ: "America/Chicago"
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: ${AWS_LOG_GROUP}
+        awslogs-region: ${AWS_REGION}
+        awslogs-stream: cron
+
+volumes:
+  caddy_data:
+  caddy_config:
