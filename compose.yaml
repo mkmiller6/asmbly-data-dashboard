@@ -1,0 +1,99 @@
+networks:
+  frontend:
+  backend:
+
+services:
+  app:
+    image: "docker.io/${DOCKER_USER}/asmbly-data-dashboard:${TAG}"
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - frontend
+      - backend
+    environment:
+      TZ: "America/Chicago"
+    depends_on:
+      - db
+      - redis
+    secrets:
+      - postgres-user
+      - postgres-password
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: ${AWS_LOG_GROUP}
+        awslogs-region: ${AWS_REGION}
+        awslogs-stream: gunicorn-server
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    networks:
+      - backend
+    environment:
+      POSTGRES_USER_FILE: /run/secrets/postgres-user
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres-password
+      TZ: "America/Chicago"
+      PGTZ: "America/Chicago"
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    secrets:
+      - postgres-user
+      - postgres-password
+  redis:
+    image: redis
+    restart: unless-stopped
+    networks:
+      - backend
+    environment:
+      TZ: "America/Chicago"
+  cron:
+    env_file:
+      - .env
+    build: ./cron-service
+    depends_on:
+      - db
+    secrets:
+      - postgres-user
+      - postgres-password
+    restart: unless-stopped
+    networks:
+      - backend
+    environment:
+      TZ: "America/Chicago"
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: ${AWS_LOG_GROUP}
+        awslogs-region: ${AWS_REGION}
+        awslogs-stream: cron
+  caddy:
+    image: caddy:2.7.5
+    env_file:
+      - .env
+    restart: unless-stopped
+    depends_on:
+      - app
+    environment:
+      TZ: "America/Chicago"
+    networks:
+      - frontend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy:/data
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  postgres:
+  caddy_data:
+  caddy_config:
+
+secrets:
+  postgres-user: 
+    file: ./secrets/postgres-user.txt
+  postgres-password: 
+    file: ./secrets/postgres-password.txt

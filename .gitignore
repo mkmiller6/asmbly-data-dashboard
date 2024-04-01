@@ -21,3 +21,6 @@ config.py
 
 # CSV files
 *.csv
+
+# Docker secrets
+secrets
