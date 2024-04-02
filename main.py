@@ -1,11 +1,10 @@
 """Run the Dash app"""
 
 import os
-from dash import Dash, CeleryManager, DiskcacheManager
-from dash_data_dashboard.src.components.layout import create_layout
-from dash_data_dashboard.src.data.dash.loader import load_churn_data
+from dash import Dash, CeleryManager
 from celery import Celery
-import diskcache
+from dash_data_dashboard.src.components.layout import create_layout
+from dash_data_dashboard.src.data.dash_data.loader import load_churn_data
 
 APP_TITLE = "Asmbly Data Dashboard"
 DATA_PATH = "./dash_data_dashboard/src/data/asmbly_churn_risk.csv"
@@ -17,12 +16,7 @@ celery_app = Celery(
     backend=os.environ["REDIS_URL"],
 )
 
-disk_cache = diskcache.Cache("./cache")
-
 callback_manager = CeleryManager(celery_app)
-
-# callback_manager = DiskcacheManager(disk_cache)
-
 
 data = load_churn_data(DATA_PATH)
 

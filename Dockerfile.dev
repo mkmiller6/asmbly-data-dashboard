@@ -16,7 +16,7 @@ RUN poetry install --no-root
 WORKDIR /app
 
 COPY ./dash_data_dashboard ./dash_data_dashboard
-COPY main.py README.md ./
+COPY main.py README.md engine.py schema.py ./
 COPY ./entrypoint.sh /entrypoint.sh
 
 RUN chmod +x /entrypoint.sh

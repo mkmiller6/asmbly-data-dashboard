@@ -5,6 +5,9 @@ services:
     restart: unless-stopped
     environment:
       TZ: "America/Chicago"
+      POSTGRES_USER_FILE: /run/secrets/postgres-user
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres-password
+      POSTGRES_DB_FILE: /run/secrets/postgres-db
     depends_on:
       - db
       - cache

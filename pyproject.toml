@@ -16,12 +16,14 @@ dash-iconify = "^0.1.2"
 gunicorn = "^21.2.0"
 sqlalchemy = "^2.0.29"
 redis = {extras = ["hiredis"], version = "^5.0.3"}
+psycopg = {extras = ["binary", "pool"], version = "^3.1.18"}
 
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.9.0"
 ruff = "^0.3.4"
 flower = "^2.0.1"
+pandas = "^2.2.1"
 
 [build-system]
 requires = ["poetry-core"]
