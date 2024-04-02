@@ -12,8 +12,9 @@ def render(app: Dash) -> dmc.Button:
         Output(Ids.CHURN_DATA_TABLE_SUBMIT, "n_clicks"),
         Input(Ids.CHURN_DATA_TABLE_SUBMIT, "n_clicks"),
         State(Ids.CHURN_DATA_TABLE, "data"),
-        State(Ids.CHURN_DATA_TABLE, "current_page"),
         prevent_initial_call=True,
+        background=True,
+        running=[(Output(Ids.CHURN_DATA_TABLE_SUBMIT, "disabled"), True, False)],
     )
     def update_database(n_clicks: int, updated_data: list[dict]) -> int:
         """Update the emailed field in the database for the accts that have been selected"""

@@ -1,21 +1,13 @@
-networks:
-  frontend:
-  backend:
-
 services:
   app:
-    image: "docker.io/${DOCKER_USER}/asmbly-data-dashboard:${TAG}"
     env_file:
       - .env
     restart: unless-stopped
-    networks:
-      - frontend
-      - backend
     environment:
       TZ: "America/Chicago"
     depends_on:
       - db
-      - redis
+      - cache
     secrets:
       - postgres-user
       - postgres-password
@@ -23,8 +15,6 @@ services:
   db:
     image: postgres:16
     restart: unless-stopped
-    networks:
-      - backend
     environment:
       POSTGRES_USER_FILE: /run/secrets/postgres-user
       POSTGRES_PASSWORD_FILE: /run/secrets/postgres-password
@@ -36,11 +26,10 @@ services:
     secrets:
       - postgres-user
       - postgres-password
-  redis:
+      - postgres-db
+  cache:
     image: redis:7.2.4
     restart: unless-stopped
-    networks:
-      - backend
     environment:
       TZ: "America/Chicago"
 

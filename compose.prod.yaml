@@ -1,5 +1,13 @@
+networks:
+  frontend:
+  backend:
+
 services:
   app:
+    image: "docker.io/${DOCKER_USER}/asmbly-data-dashboard:${TAG}"
+    networks:
+      - frontend
+      - backend
     logging:
       driver: awslogs
       options:
@@ -45,6 +53,12 @@ services:
         awslogs-group: ${AWS_LOG_GROUP}
         awslogs-region: ${AWS_REGION}
         awslogs-stream: cron
+  db:
+    networks:
+      - backend
+  cache:
+    networks:
+      - backend
 
 volumes:
   caddy_data:

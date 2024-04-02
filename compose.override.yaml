@@ -1,6 +1,12 @@
 services:
   app:
-    build: ./
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      args:
+        DOCKER_BUILDKIT: 1
     volumes:
       - .:/app
+    ports:
+      - "8050:8050"
   
