@@ -33,6 +33,7 @@ class Member(Base):
     last_name: Mapped[str] = mapped_column(String(55))
     email: Mapped[str] = mapped_column(String(255))
     emailed: Mapped[bool] = mapped_column(server_default=sql.false())
+    last_emailed: Mapped[Optional[datetime.date]] = mapped_column(Date)
     active: Mapped[bool] = mapped_column(server_default=sql.true())
 
 

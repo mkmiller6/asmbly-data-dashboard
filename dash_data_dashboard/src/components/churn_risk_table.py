@@ -52,9 +52,9 @@ def render(app: Dash) -> html.Div:
         }
 
         query = f"""
-        SELECT neon_id, first_name, last_name, email, risk_score, emailed
+        SELECT neon_id, first_name, last_name, email, risk_score, emailed, last_emailed
         FROM member
-        {"WHERE emailed is false" if not show_emailed else ""}
+        WHERE active = true {"AND emailed = false" if not show_emailed else ""}
         ORDER BY {sort_mapping.get(sort_by, "risk_score")} {sort_dir.upper()}
         """
 
@@ -68,10 +68,11 @@ def render(app: Dash) -> html.Div:
                 (pl.col("first_name") + " " + pl.col("last_name")).alias("Name"),
                 pl.col("email").alias("Email Address"),
                 pl.col("risk_score").round(3).alias("Churn Risk"),
-                pl.when(pl.col("emailed") is True)
+                pl.when(pl.col("emailed") == True)
                 .then(pl.lit("Yes"))
                 .otherwise(pl.lit("No"))
                 .alias("Emailed"),
+                pl.col("last_emailed").alias("Last Emailed"),
             )
             .filter(
                 pl.col("Name").str.to_lowercase().str.contains(search, literal=True)
@@ -88,23 +89,44 @@ def render(app: Dash) -> html.Div:
 
         cols = [
             {"name": i, "id": i}
-            for i in paged_df.select(pl.all().exclude("Emailed")).columns
+            for i in paged_df.select(
+                pl.all().exclude(["Emailed", "Last Emailed"])
+            ).columns
         ]
 
-        cols.append(
+        append = [
             {
                 "name": "Emailed",
                 "id": "Emailed",
                 "presentation": "dropdown",
-            }
-        )
+            },
+            {
+                "name": "Last Emailed",
+                "id": "Last Emailed",
+                "type": "datetime",
+                "on_change": {
+                    "action": "coerce",
+                    "failure": "default",
+                },
+                "validation": {
+                    "default": None,
+                },
+            },
+        ]
+        for col in append:
+            cols.append(col)
+
         items = result_df.select(pl.count()).collect().item()
         page_count = 1 if items == 0 else math.ceil(items / PAGE_SIZE)
 
         return data, cols, page_count
 
-    return html.Div(
+    return dmc.Card(
         id=Ids.CHURN_DATA_TABLE_CONTAINER,
+        withBorder=True,
+        shadow="md",
+        radius="md",
+        mih=797,
         children=[
             dmc.Text("Churn Risk", size="lg", mb="15px"),
             dmc.Divider(mb="15px"),
@@ -124,6 +146,9 @@ def render(app: Dash) -> html.Div:
                 page_current=0,
                 page_size=PAGE_SIZE,
                 editable=True,
+                tooltip_header={
+                    "Last Emailed": "YYYY-MM-DD Format",
+                },
                 dropdown={
                     "Emailed": {
                         "options": [{"label": i, "value": i} for i in ["Yes", "No"]],

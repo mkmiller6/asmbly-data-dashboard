@@ -9,5 +9,5 @@ def render() -> Switch:
         id=Ids.CHURN_DATA_TABLE_FILTER,
         label="Show already emailed",
         color="indigo",
-        checked=True,
+        checked=False,
     )
