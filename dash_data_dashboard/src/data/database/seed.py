@@ -33,7 +33,7 @@ def write_db_from_csv(table_name: str, file_path: str, db_uri: str) -> None:
 
 if __name__ == "__main__":
     write_db_from_csv(
-        table_name="members",
+        table_name="member",
         file_path=Path()
         .cwd()
         .joinpath("dash_data_dashboard/src/data/asmbly_churn_risk.csv"),

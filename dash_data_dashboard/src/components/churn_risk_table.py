@@ -4,6 +4,9 @@ import math
 import polars as pl
 from dash import html, Dash, dash_table, Input, Output
 import dash_mantine_components as dmc
+from sqlalchemy import select
+from engine import engine
+from schema import Member
 from .ids import Ids
 from . import (
     churn_table_sort_direction,
@@ -13,10 +16,11 @@ from . import (
     churn_table_submit,
 )
 
+
 PAGE_SIZE = 15
 
 
-def render(app: Dash, source: pl.LazyFrame) -> html.Div:
+def render(app: Dash) -> html.Div:
     """Render the churn risk table"""
 
     @app.callback(
@@ -41,25 +45,57 @@ def render(app: Dash, source: pl.LazyFrame) -> html.Div:
 
         search = search.lower()
 
-        filtered_source = source.sort(
-            pl.col(sort_by), descending=sort_dir == "desc"
-        ).filter(
-            pl.col("Name").str.to_lowercase().str.contains(search, literal=True)
-            | pl.col("Email Address").str.contains(search, literal=True)
-            | pl.col("Neon ID").str.contains(search, literal=True)
-        )
-        if not show_emailed:
-            filtered_source = filtered_source.filter(pl.col("Emailed") == "No")
+        sort_mapping = {
+            "Name": Member.first_name,
+            "Email Address": Member.email,
+            "Neon ID": Member.neon_id,
+            "Churn Risk": Member.risk_score,
+            "Emailed": Member.emailed,
+        }
 
-        final_df = filtered_source.slice(
+        sort_desc = {k: v.desc() for k, v in sort_mapping.items()}
+
+        filtered_members = select(
+            Member.neon_id,
+            Member.first_name,
+            Member.last_name,
+            Member.email,
+            Member.risk_score,
+            Member.emailed,
+        ).order_by(sort_mapping[sort_by] if sort_dir == "asc" else sort_desc[sort_by])
+
+        if not show_emailed:
+            filtered_members = filtered_members.where(Member.emailed is False)
+
+        result_df = (
+            pl.read_database(filtered_members, engine)
+            .lazy()
+            .select(
+                pl.col("neon_id").alias("Neon ID"),
+                (pl.col("first_name") + " " + pl.col("last_name")).alias("Name"),
+                pl.col("email").alias("Email Address"),
+                pl.col("risk_score").round(3).alias("Churn Risk"),
+                pl.when(pl.col("emailed") is True)
+                .then(pl.lit("Yes"))
+                .otherwise(pl.lit("No"))
+                .alias("Emailed"),
+            )
+            .filter(
+                pl.col("Name").str.to_lowercase().str.contains(search, literal=True)
+                | pl.col("Email Address").str.contains(search, literal=True)
+                | pl.col("Neon ID").str.contains(search, literal=True)
+            )
+        )
+
+        paged_df = result_df.slice(
             offset=page_current * page_size, length=page_size
         ).collect()
 
-        data = final_df.to_dicts()
+        data = paged_df.to_dicts()
 
         cols = [
             {"name": i, "id": i}
-            for i in filtered_source.select(pl.all().exclude("Emailed")).columns
+            for i in paged_df.select(pl.all().exclude("Emailed")).columns
         ]
 
         cols.append(
@@ -69,9 +105,7 @@ def render(app: Dash, source: pl.LazyFrame) -> html.Div:
                 "presentation": "dropdown",
             }
         )
-
-        items = filtered_source.select(pl.len()).collect().item()
-
+        items = result_df.select(pl.count()).collect().item()
         page_count = 1 if items == 0 else math.ceil(items / PAGE_SIZE)
 
         return data, cols, page_count

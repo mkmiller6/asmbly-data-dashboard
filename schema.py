@@ -5,7 +5,7 @@
 from typing import List
 from typing import Optional
 import datetime
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, sql
 from sqlalchemy import String, Date
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -32,8 +32,8 @@ class Member(Base):
     first_name: Mapped[str] = mapped_column(String(55))
     last_name: Mapped[str] = mapped_column(String(55))
     email: Mapped[str] = mapped_column(String(255))
-    emailed: Mapped[bool] = mapped_column(default=False)
-    active: Mapped[bool] = mapped_column(default=True)
+    emailed: Mapped[bool] = mapped_column(server_default=sql.false())
+    active: Mapped[bool] = mapped_column(server_default=sql.true())
 
 
 class MembershipCount(Base):
@@ -63,7 +63,6 @@ class EventInstance(Base):
     event_type_id: Mapped[int] = mapped_column(ForeignKey("event_type.id"))
     date: Mapped[datetime.date] = mapped_column(Date)
     event_type: Mapped["EventType"] = relationship(back_populates="instances")
-    member: Mapped[Member] = relationship("Member")
 
 
 if __name__ == "__main__":

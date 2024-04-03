@@ -33,7 +33,7 @@ def create_layout(app: Dash, source: pl.LazyFrame) -> html.Div:
                     dmc.Col(
                         span=8,
                         children=[
-                            churn_risk_table.render(app, source),
+                            churn_risk_table.render(app),
                         ],
                     )
                 ],
