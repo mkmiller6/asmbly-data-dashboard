@@ -4,9 +4,7 @@ import math
 import polars as pl
 from dash import html, Dash, dash_table, Input, Output
 import dash_mantine_components as dmc
-from sqlalchemy import select
-from engine import engine
-from schema import Member
+from engine import connection_uri
 from .ids import Ids
 from . import (
     churn_table_sort_direction,
@@ -46,29 +44,24 @@ def render(app: Dash) -> html.Div:
         search = search.lower()
 
         sort_mapping = {
-            "Name": Member.first_name,
-            "Email Address": Member.email,
-            "Neon ID": Member.neon_id,
-            "Churn Risk": Member.risk_score,
-            "Emailed": Member.emailed,
+            "Name": "first_name",
+            "Email Address": "email",
+            "Neon ID": "neon_id",
+            "Churn Risk": "risk_score",
+            "Emailed": "emailed",
         }
 
-        sort_desc = {k: v.desc() for k, v in sort_mapping.items()}
+        query = f"""
+        SELECT neon_id, first_name, last_name, email, risk_score, emailed
+        FROM member
+        {"WHERE emailed is false" if not show_emailed else ""}
+        ORDER BY {sort_mapping.get(sort_by, "risk_score")} {sort_dir.upper()}
+        """
 
-        filtered_members = select(
-            Member.neon_id,
-            Member.first_name,
-            Member.last_name,
-            Member.email,
-            Member.risk_score,
-            Member.emailed,
-        ).order_by(sort_mapping[sort_by] if sort_dir == "asc" else sort_desc[sort_by])
-
-        if not show_emailed:
-            filtered_members = filtered_members.where(Member.emailed is False)
+        uri = connection_uri.replace("postgresql+psycopg", "postgresql")
 
         result_df = (
-            pl.read_database(filtered_members, engine)
+            pl.read_database_uri(query, uri)
             .lazy()
             .select(
                 pl.col("neon_id").alias("Neon ID"),
