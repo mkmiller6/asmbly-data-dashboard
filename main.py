@@ -6,7 +6,7 @@ from celery import Celery
 from dash_data_dashboard.src.components.layout import create_layout
 from dash_data_dashboard.src.data.dash_data.loader import load_churn_data
 
-APP_TITLE = "Asmbly Data Dashboard"
+APP_TITLE = "Data Dashboard"
 DATA_PATH = "./dash_data_dashboard/src/data/asmbly_churn_risk.csv"
 
 

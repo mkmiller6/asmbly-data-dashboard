@@ -13,27 +13,28 @@ def create_header_content(app: Dash) -> dmc.Group:
         position="apart",
         w="100%",
         children=[
-            dmc.Text(
-                app.title,
-                size="xl",
-                weight=500,
-                color="#2b2c6b",
-            ),
             dmc.Group(
                 children=[
                     html.A(
-                        dmc.Avatar(
+                        dmc.Image(
                             src="https://asmbly.org/wp-content/uploads/2023/12/purple-horizontal.svg",
-                            radius="xl",
+                            fit="contain",
+                            width=130,
                         ),
                         href="https://asmbly.org",
                         target="_blank",
                     ),
-                    dmc.Avatar("MM", radius="xl", color="#2b2c6b"),
+                    dmc.Text(
+                        app.title,
+                        size="xl",
+                        weight=500,
+                        color="#2b2c6b",
+                    ),
                 ],
                 spacing="xl",
-                position="right",
+                position="left",
             ),
+            dmc.Avatar("MM", radius="xl", color="#2b2c6b"),
         ],
     )
 
@@ -49,6 +50,7 @@ def render(app: Dash) -> dmc.Header:
             "display": "flex",
             "justifyContent": "center",
             "alignItems": "center",
+            "boxShadow": "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
         },
         children=[
             dmc.MediaQuery(

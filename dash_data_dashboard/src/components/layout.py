@@ -4,6 +4,7 @@ import polars as pl
 from dash import html, Dash
 import dash_mantine_components as dmc
 from . import churn_risk_table, header
+from .breakpoints import Breakpoint as bp
 
 
 def create_layout(app: Dash, source: pl.LazyFrame) -> html.Div:
@@ -23,20 +24,28 @@ def create_layout(app: Dash, source: pl.LazyFrame) -> html.Div:
         withGlobalStyles=True,
         withNormalizeCSS=True,
         children=[
-            header.render(app),
-            dmc.Grid(
-                mt=75,
-                gutter="md",
-                mx=20,
-                className="grid-container",
+            dmc.Container(
+                size=bp.xxl,
+                px=10,
                 children=[
-                    dmc.Col(
-                        span=8,
+                    header.render(app),
+                    dmc.Grid(
+                        mt=85,
+                        gutter="md",
                         children=[
-                            churn_risk_table.render(app),
+                            dmc.Col(
+                                span=9,
+                                children=[
+                                    churn_risk_table.render(app),
+                                ],
+                            ),
+                            dmc.Col(
+                                span=3,
+                                children=[dmc.Stack()],
+                            ),
                         ],
-                    )
+                    ),
                 ],
-            ),
+            )
         ],
     )
