@@ -1,7 +1,7 @@
 """Render the app header"""
 
 import dash_mantine_components as dmc
-from dash import Dash, html
+from dash import Dash
 from .breakpoints import Breakpoint as bp
 
 
@@ -15,7 +15,7 @@ def create_header_content(app: Dash) -> dmc.Group:
         children=[
             dmc.Group(
                 children=[
-                    html.A(
+                    dmc.Anchor(
                         dmc.Image(
                             src="https://asmbly.org/wp-content/uploads/2023/12/purple-horizontal.svg",
                             fit="contain",
@@ -24,9 +24,9 @@ def create_header_content(app: Dash) -> dmc.Group:
                         href="https://asmbly.org",
                         target="_blank",
                     ),
-                    dmc.Text(
+                    dmc.Title(
                         app.title,
-                        size="xl",
+                        order=2,
                         weight=500,
                         color="#2b2c6b",
                     ),

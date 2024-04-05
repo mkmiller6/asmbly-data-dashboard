@@ -4,7 +4,7 @@ import math
 import polars as pl
 from dash import html, Dash, dash_table, Input, Output
 import dash_mantine_components as dmc
-from engine import connection_uri
+from engine import raw_uri
 from .ids import Ids
 from . import (
     churn_table_sort_direction,
@@ -58,7 +58,7 @@ def render(app: Dash) -> html.Div:
         ORDER BY {sort_mapping.get(sort_by, "risk_score")} {sort_dir.upper()}
         """
 
-        uri = connection_uri.replace("postgresql+psycopg", "postgresql")
+        uri = raw_uri
 
         result_df = (
             pl.read_database_uri(query, uri)

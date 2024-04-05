@@ -13,3 +13,5 @@ class Ids(StrEnum):
     CHURN_DATA_TABLE_SORT_DIR = "churn-data-table-sort-dir"
     CHURN_DATA_TABLE_FILTER = "churn-data-table-filter"
     CHURN_DATA_TABLE_SUBMIT = "churn-data-table-submit"
+
+    ACTIVE_MEMBERS_CARD = "active-members-card"

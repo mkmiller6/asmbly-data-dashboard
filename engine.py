@@ -16,6 +16,8 @@ with open(os.environ["POSTGRES_DB_FILE"], "r", encoding="utf-8") as f:
 
 connection_uri = f"postgresql+psycopg://{postgres_user}:{postgres_password}@db:{postgres_port}/{postgres_db}"
 
+raw_uri = connection_uri.replace("postgresql+psycopg", "postgresql")
+
 engine = create_engine(
     connection_uri,
     echo=True,
