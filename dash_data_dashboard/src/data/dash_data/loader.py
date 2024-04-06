@@ -20,3 +20,16 @@ def load_churn_data(path: str) -> pl.LazyFrame:
     )
 
     return q
+
+
+def load_membership_data(db_uri: str) -> pl.LazyFrame:
+    """Load data from database"""
+
+    query = """
+        SELECT *
+        FROM membership_count
+    """
+
+    lf = pl.read_database_uri(query, db_uri).lazy()
+
+    return lf

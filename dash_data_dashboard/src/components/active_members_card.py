@@ -1,25 +1,15 @@
 import datetime
 import polars as pl
-from dash import html, Dash
 import dash_mantine_components as dmc
 from dash_iconify import DashIconify
-from engine import raw_uri
 from .ids import Ids
 
 
-def render(app: Dash, source: pl.LazyFrame) -> dmc.Card:
+def render(source: pl.LazyFrame) -> dmc.Card:
     """Render the active members card"""
 
-    query = """
-        SELECT total_active_count, date
-        FROM membership_count
-        WHERE date > (CURRENT_DATE - INTERVAL '366 days')
-    """
-
-    data = pl.read_database_uri(query, raw_uri).lazy()
-
     active_yesterday = (
-        data.select(
+        source.select(
             pl.col("total_active_count").filter(
                 pl.col("date")
                 == pl.lit(datetime.date.today() - datetime.timedelta(days=1))
@@ -29,9 +19,20 @@ def render(app: Dash, source: pl.LazyFrame) -> dmc.Card:
         .get_column("total_active_count")
         .item()
     )
+    active_two_days_ago = (
+        source.select(
+            pl.col("total_active_count").filter(
+                pl.col("date")
+                == pl.lit(datetime.date.today() - datetime.timedelta(days=2))
+            )
+        )
+        .collect()
+        .get_column("total_active_count")
+        .item()
+    )
 
     active_month_ago = (
-        data.select(
+        source.select(
             pl.col("total_active_count").filter(
                 pl.col("date")
                 == pl.lit(datetime.date.today() - datetime.timedelta(days=30))
@@ -43,7 +44,7 @@ def render(app: Dash, source: pl.LazyFrame) -> dmc.Card:
     )
 
     active_year_ago = (
-        data.select(
+        source.select(
             pl.col("total_active_count").filter(
                 pl.col("date")
                 == pl.lit(datetime.date.today() - datetime.timedelta(days=365))
@@ -60,22 +61,37 @@ def render(app: Dash, source: pl.LazyFrame) -> dmc.Card:
     mom_change_count = active_yesterday - active_month_ago
     yoy_change_count = active_yesterday - active_year_ago
 
+    daily_change = active_yesterday - active_two_days_ago
+
     return dmc.Card(
         id=Ids.ACTIVE_MEMBERS_CARD,
         withBorder=True,
         radius="md",
         shadow="md",
         children=[
+            dmc.Text("Active Membership", size="lg", align="center", mb=15),
+            dmc.Divider(),
             dmc.Stack(
                 children=[
-                    dmc.Text("Membership", size="lg", align="center"),
-                    dmc.Divider(),
                     dmc.Stack(
                         [
-                            dmc.Text("Current Active Members"),
-                            dmc.Text(f"{active_yesterday:,}"),
+                            dmc.Text("Current (+/- yesterday)"),
+                            (
+                                dmc.Text(
+                                    f"{active_yesterday:,} ({daily_change:+})",
+                                    color="green",
+                                    weight=500,
+                                )
+                                if daily_change >= 0
+                                else dmc.Text(
+                                    f"{active_yesterday:,} ({daily_change:+})",
+                                    color="red",
+                                    weight=500,
+                                )
+                            ),
                         ],
                         align="center",
+                        mt=15,
                     ),
                     dmc.Divider(),
                     dmc.Text("Month-over-Month Change", align="center"),
@@ -90,9 +106,11 @@ def render(app: Dash, source: pl.LazyFrame) -> dmc.Card:
                                                 dmc.Text(
                                                     f"{mom_change_percent:.2f}%",
                                                     color="green",
+                                                    weight=500,
                                                 ),
                                                 DashIconify(
                                                     icon="solar:double-alt-arrow-up-line-duotone",
+                                                    height=25,
                                                     color="green",
                                                 ),
                                             ]
@@ -101,9 +119,11 @@ def render(app: Dash, source: pl.LazyFrame) -> dmc.Card:
                                                 dmc.Text(
                                                     f"{mom_change_percent:.2f}%",
                                                     color="red",
+                                                    weight=500,
                                                 ),
                                                 DashIconify(
                                                     icon="solar:double-alt-arrow-down-line-duotone",
+                                                    height=25,
                                                     color="red",
                                                 ),
                                             ]
@@ -124,19 +144,24 @@ def render(app: Dash, source: pl.LazyFrame) -> dmc.Card:
                                                 dmc.Text(
                                                     f"{mom_change_count:,}",
                                                     color="green",
+                                                    weight=500,
                                                 ),
                                                 DashIconify(
                                                     icon="solar:double-alt-arrow-up-line-duotone",
+                                                    height=25,
                                                     color="green",
                                                 ),
                                             ]
                                             if mom_change_count > 0
                                             else [
                                                 dmc.Text(
-                                                    f"{mom_change_count:,}", color="red"
+                                                    f"{mom_change_count:,}",
+                                                    color="red",
+                                                    weight=500,
                                                 ),
                                                 DashIconify(
                                                     icon="solar:double-alt-arrow-down-line-duotone",
+                                                    height=25,
                                                     color="red",
                                                 ),
                                             ]
@@ -168,9 +193,11 @@ def render(app: Dash, source: pl.LazyFrame) -> dmc.Card:
                                                 dmc.Text(
                                                     f"{yoy_change_percent:.2f}%",
                                                     color="green",
+                                                    weight=500,
                                                 ),
                                                 DashIconify(
                                                     icon="solar:double-alt-arrow-up-line-duotone",
+                                                    height=25,
                                                     color="green",
                                                 ),
                                             ]
@@ -179,9 +206,11 @@ def render(app: Dash, source: pl.LazyFrame) -> dmc.Card:
                                                 dmc.Text(
                                                     f"{yoy_change_percent:.2f}%",
                                                     color="red",
+                                                    weight=500,
                                                 ),
                                                 DashIconify(
                                                     icon="solar:double-alt-arrow-down-line-duotone",
+                                                    height=25,
                                                     color="red",
                                                 ),
                                             ]
@@ -203,19 +232,24 @@ def render(app: Dash, source: pl.LazyFrame) -> dmc.Card:
                                                 dmc.Text(
                                                     f"{yoy_change_count:,}",
                                                     color="green",
+                                                    weight=500,
                                                 ),
                                                 DashIconify(
                                                     icon="solar:double-alt-arrow-up-line-duotone",
+                                                    height=25,
                                                     color="green",
                                                 ),
                                             ]
                                             if yoy_change_count > 0
                                             else [
                                                 dmc.Text(
-                                                    f"{yoy_change_count:,}", color="red"
+                                                    f"{yoy_change_count:,}",
+                                                    color="red",
+                                                    weight=500,
                                                 ),
                                                 DashIconify(
                                                     icon="solar:double-alt-arrow-down-line-duotone",
+                                                    height=25,
                                                     color="red",
                                                 ),
                                             ]
@@ -235,6 +269,8 @@ def render(app: Dash, source: pl.LazyFrame) -> dmc.Card:
                         mx=50,
                     ),
                 ],
-            )
+                spacing="lg",
+                mb=20,
+            ),
         ],
     )

@@ -3,7 +3,13 @@
 import polars as pl
 from dash import html, Dash
 import dash_mantine_components as dmc
-from . import churn_risk_table, header, active_members_card
+from . import (
+    churn_risk_table,
+    header,
+    active_members_card,
+    churns_and_joins,
+    active_members_plot,
+)
 from .breakpoints import Breakpoint as bp
 
 
@@ -42,8 +48,17 @@ def create_layout(app: Dash, source: pl.LazyFrame) -> html.Div:
                             dmc.Col(
                                 span=3,
                                 children=[
-                                    dmc.Stack(active_members_card.render(app, source))
+                                    dmc.Stack(
+                                        [
+                                            active_members_card.render(source),
+                                            churns_and_joins.render(source),
+                                        ]
+                                    )
                                 ],
+                            ),
+                            dmc.Col(
+                                span=12,
+                                children=[active_members_plot.render(app, source)],
                             ),
                         ],
                     ),

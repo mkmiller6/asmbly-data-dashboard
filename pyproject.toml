@@ -17,6 +17,7 @@ gunicorn = "^21.2.0"
 sqlalchemy = "^2.0.29"
 redis = {extras = ["hiredis"], version = "^5.0.3"}
 psycopg = {extras = ["binary", "pool"], version = "^3.1.18"}
+statsmodels = "^0.14.1"
 
 
 [tool.poetry.group.dev.dependencies]

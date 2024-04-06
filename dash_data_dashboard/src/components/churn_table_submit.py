@@ -2,10 +2,12 @@ import datetime
 from dash import Input, Output, State, Dash
 from sqlalchemy import update
 from sqlalchemy.orm import Session
-from schema import Member
-from engine import engine
 import dash_mantine_components as dmc
 import polars as pl
+
+from schema import Member
+from engine import engine
+
 
 from .ids import Ids
 

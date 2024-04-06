@@ -18,7 +18,7 @@ from . import (
 PAGE_SIZE = 15
 
 
-def render(app: Dash) -> html.Div:
+def render(app: Dash) -> dmc.Card:
     """Render the churn risk table"""
 
     @app.callback(
@@ -64,7 +64,13 @@ def render(app: Dash) -> html.Div:
             pl.read_database_uri(query, uri)
             .lazy()
             .select(
-                pl.col("neon_id").alias("Neon ID"),
+                (
+                    pl.format(
+                        "[{}](https://asmbly.app.neoncrm.com/admin/accounts/{}/about)",
+                        pl.col("neon_id"),
+                        pl.col("neon_id"),
+                    )
+                ).alias("Neon ID"),
                 (pl.col("first_name") + " " + pl.col("last_name")).alias("Name"),
                 pl.col("email").alias("Email Address"),
                 pl.col("risk_score").round(3).alias("Churn Risk"),
@@ -88,9 +94,17 @@ def render(app: Dash) -> html.Div:
         data = paged_df.to_dicts()
 
         cols = [
+            {
+                "name": "Neon ID",
+                "id": "Neon ID",
+                "presentation": "markdown",
+            },
+        ]
+
+        middle_cols = [
             {"name": i, "id": i}
             for i in paged_df.select(
-                pl.all().exclude(["Emailed", "Last Emailed"])
+                pl.all().exclude(["Emailed", "Last Emailed", "Neon ID"])
             ).columns
         ]
 
@@ -113,8 +127,9 @@ def render(app: Dash) -> html.Div:
                 },
             },
         ]
-        for col in append:
-            cols.append(col)
+        for col in middle_cols, append:
+            cols.append(col[0])
+            cols.append(col[1])
 
         items = result_df.select(pl.count()).collect().item()
         page_count = 1 if items == 0 else math.ceil(items / PAGE_SIZE)

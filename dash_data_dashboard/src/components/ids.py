@@ -15,3 +15,6 @@ class Ids(StrEnum):
     CHURN_DATA_TABLE_SUBMIT = "churn-data-table-submit"
 
     ACTIVE_MEMBERS_CARD = "active-members-card"
+
+    ACTIVE_MEMBERS_PLOT = "active-members-plot"
+    ACTIVE_MEMBERS_PLOT_DATE_RANGE = "active-members-plot-date-range"
