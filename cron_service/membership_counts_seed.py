@@ -156,17 +156,13 @@ def join_dataframes(
 
 def write_db_from_csv(table_name: str, db_uri: str) -> None:
     """Seed the database with the intitial member data"""
-    sub_data = load_subscriber_data(
-        "dash_data_dashboard/src/data/subscriber_counts.csv"
-    )
+    sub_data = load_subscriber_data("./data/subscriber_counts.csv")
 
-    account_creations = load_account_creations(
-        "dash_data_dashboard/src/data/account_creations.csv"
-    )
+    account_creations = load_account_creations("./data/account_creations.csv")
 
-    churns = load_churns("dash_data_dashboard/src/data/all_memberships.csv")
+    churns = load_churns("./data/all_memberships.csv")
 
-    joins = load_joins("dash_data_dashboard/src/data/all_memberships.csv")
+    joins = load_joins("./data/all_memberships.csv")
 
     data = join_dataframes(sub_data, account_creations, churns, joins)
 

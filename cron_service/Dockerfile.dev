@@ -1,5 +1,7 @@
 FROM python:3.11 as base
 
+RUN apt-get update && apt-get -y install cron
+
 ENV POETRY_NO_INTERACTION=1 \
     POETRY_VIRTUALENVS_CREATE=0 \
     POETRY_HOME=/opt/poetry \
@@ -15,12 +17,13 @@ RUN poetry install --no-root
 
 WORKDIR /app
 
-COPY ./dash_data_dashboard ./dash_data_dashboard
-COPY main.py README.md engine.py schema.py ./
-COPY ./entrypoint.sh /entrypoint.sh
+COPY ./cron_service ./
+COPY engine.py schema.py ./
 
-RUN chmod +x /entrypoint.sh
+COPY ./cron_service/crontab /etc/cron.d/crontab
 
-EXPOSE 8050
+RUN chmod 0644 /etc/cron.d/crontab
 
-ENTRYPOINT ["/entrypoint.sh"]
+RUN /usr/bin/crontab /etc/cron.d/crontab
+
+ENTRYPOINT ["cron", "-f", "-l", "8"]

@@ -33,6 +33,7 @@ def create_layout(app: Dash, source: pl.LazyFrame) -> html.Div:
             dmc.Container(
                 size=bp.xxl,
                 px=10,
+                mb=40,
                 children=[
                     header.render(app),
                     dmc.Grid(

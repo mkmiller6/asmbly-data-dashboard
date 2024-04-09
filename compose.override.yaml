@@ -2,11 +2,14 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: ./dash_data_dashboard/Dockerfile.dev
       args:
         DOCKER_BUILDKIT: 1
     volumes:
       - .:/app
     ports:
       - "8050:8050"
-  
+  cron:
+    build:
+      dockerfile: ./cron_service/Dockerfile.dev
+    

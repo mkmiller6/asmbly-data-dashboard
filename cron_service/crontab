@@ -1,0 +1,2 @@
+#run maintenance scripts at 3:33 AM and 3:47 AM daily
+33 3 * * * python3 /app/daily_membership_update.py > /proc/1/fd/1 2>&1

@@ -8,52 +8,81 @@ from .ids import Ids
 def render(source: pl.LazyFrame) -> dmc.Card:
     """Render the active members card"""
 
-    active_yesterday = (
-        source.select(
-            pl.col("total_active_count").filter(
+    try:
+        active_yesterday = (
+            source.filter(
                 pl.col("date")
                 == pl.lit(datetime.date.today() - datetime.timedelta(days=1))
             )
+            .select(pl.col("total_active_count"))
+            .collect()
+            .get_column("total_active_count")
+            .item()
         )
-        .collect()
-        .get_column("total_active_count")
-        .item()
-    )
-    active_two_days_ago = (
-        source.select(
-            pl.col("total_active_count").filter(
+    except ValueError:
+        active_yesterday = (
+            source.select(pl.col("total_active_count").first())
+            .collect()
+            .get_column("total_active_count")
+            .item()
+        )
+
+    try:
+        active_two_days_ago = (
+            source.filter(
                 pl.col("date")
                 == pl.lit(datetime.date.today() - datetime.timedelta(days=2))
             )
+            .select(pl.col("total_active_count"))
+            .collect()
+            .get_column("total_active_count")
+            .item()
         )
-        .collect()
-        .get_column("total_active_count")
-        .item()
-    )
+    except ValueError:
+        active_two_days_ago = (
+            source.select(pl.col("total_active_count").limit(2).last())
+            .collect()
+            .get_column("total_active_count")
+            .item()
+        )
 
-    active_month_ago = (
-        source.select(
-            pl.col("total_active_count").filter(
+    try:
+        active_month_ago = (
+            source.filter(
                 pl.col("date")
                 == pl.lit(datetime.date.today() - datetime.timedelta(days=30))
             )
+            .select(pl.col("total_active_count"))
+            .collect()
+            .get_column("total_active_count")
+            .item()
         )
-        .collect()
-        .get_column("total_active_count")
-        .item()
-    )
+    except ValueError:
+        active_month_ago = (
+            source.select(pl.col("total_active_count").limit(30).last())
+            .collect()
+            .get_column("total_active_count")
+            .item()
+        )
 
-    active_year_ago = (
-        source.select(
-            pl.col("total_active_count").filter(
+    try:
+        active_year_ago = (
+            source.filter(
                 pl.col("date")
                 == pl.lit(datetime.date.today() - datetime.timedelta(days=365))
             )
+            .select(pl.col("total_active_count"))
+            .collect()
+            .get_column("total_active_count")
+            .item()
         )
-        .collect()
-        .get_column("total_active_count")
-        .item()
-    )
+    except ValueError:
+        active_year_ago = (
+            source.select(pl.col("total_active_count").limit(365).last())
+            .collect()
+            .get_column("total_active_count")
+            .item()
+        )
 
     mom_change_percent = ((active_yesterday / active_month_ago) - 1) * 100
     yoy_change_percent = ((active_yesterday / active_year_ago) - 1) * 100

@@ -34,19 +34,8 @@ services:
       - caddy_data:/data
       - caddy_config:/config
   cron:
-    env_file:
-      - .env
-    build: ./cron-service
-    depends_on:
-      - db
-    secrets:
-      - postgres-user
-      - postgres-password
-    restart: unless-stopped
     networks:
       - backend
-    environment:
-      TZ: "America/Chicago"
     logging:
       driver: awslogs
       options:

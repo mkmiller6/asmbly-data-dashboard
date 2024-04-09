@@ -34,8 +34,6 @@ def write_db_from_csv(table_name: str, file_path: str, db_uri: str) -> None:
 if __name__ == "__main__":
     write_db_from_csv(
         table_name="member",
-        file_path=Path()
-        .cwd()
-        .joinpath("dash_data_dashboard/src/data/asmbly_churn_risk.csv"),
+        file_path=Path().cwd().joinpath("./data/asmbly_churn_risk.csv"),
         db_uri=connection_uri,
     )

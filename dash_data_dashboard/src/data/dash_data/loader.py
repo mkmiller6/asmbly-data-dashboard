@@ -28,6 +28,7 @@ def load_membership_data(db_uri: str) -> pl.LazyFrame:
     query = """
         SELECT *
         FROM membership_count
+        ORDER BY date DESC
     """
 
     lf = pl.read_database_uri(query, db_uri).lazy()
