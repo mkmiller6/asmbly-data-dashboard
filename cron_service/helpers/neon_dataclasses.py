@@ -55,31 +55,22 @@ class NeonEventRegistration:
 
 
 @dataclass
-class NeonAccount:
+class BasicAccountInfo:
     neon_id: str
     first_name: str
     last_name: str
     email: str
-    address: str | None
-    city: str | None
-    state: str | None
-    zip: str | None
     phone: str | None
     birthdate: datetime.date | None
     gender: str | None
+    referral_source: str | None
     openpath_id: str | None
     discourse_id: str | None
-    referral_source: str | None
-    family_membership: bool
     waiver_date: datetime.date | None
     orientation_date: datetime.date | None
     teacher: bool
     steward: bool
     volunteer: bool
-    current_membership_status: AccountCurrentMembershipStatus
-    memberships: list[NeonMembership]
-    event_registrations: list[NeonEventRegistration]
-    donations: list[Donation]
 
     @property
     def full_name(self) -> str:
@@ -93,179 +84,13 @@ class NeonAccount:
 
         return age
 
-    @property
-    def total_dollars_spent(self) -> float:
-        mem_sum, event_sum, donation_sum = 0, 0, 0
-        if self.memberships:
-            mem_sum = sum(
-                m.price
-                for m in self.memberships
-                if m.status == NeonMembershipStatus.SUCCEEDED
-            )
-        if self.event_registrations:
-            event_sum = sum(
-                r.registration_amount
-                for r in self.event_registrations
-                if r.registration_status == NeonEventRegistrationStatus.SUCCEEDED
-            )
-        if self.donations:
-            donation_sum = sum(d.amount for d in self.donations)
-        return mem_sum + event_sum + donation_sum
 
-    @property
-    def total_classes_attended(self) -> int:
-        return len(self.event_registrations)
-
-    @property
-    def first_membership_start_date(self) -> datetime.date | None:
-        if self.memberships:
-            return self.memberships[0].start_date
-        return None
-
-    @property
-    def has_annual_membership(self) -> bool:
-        return any(m.type == NeonMembershipType.ANNUAL for m in self.memberships)
-
-    @property
-    def membership_duration(self) -> int:
-        length = 0
-        for m in self.memberships:
-            if m.type == NeonMembershipType.MONTHLY:
-                length += 1
-                continue
-            if m.type == NeonMembershipType.ANNUAL:
-                length += 12
-
-        return length
-
-    def get_classes_before_first_membership(self) -> int:
-        """
-        Return a count of all classes attended before the start of the first membership.
-
-        If acct has no memberships, return a count of all classes attended.
-        """
-        first_mem = self.first_membership_start_date
-
-        if not first_mem:
-            return len(self.event_registrations)
-
-        events_attended = list(
-            filter(lambda x: x.event_date < first_mem, self.event_registrations)
-        )
-
-        return len(events_attended)
-
-    def get_classes_for_interval(
-        self, start_date: datetime.date, end_date: datetime.date
-    ) -> list[NeonEventRegistration] | None:
-        """
-        For the interval determined by start_date and end_date,
-        find the number of classes of each category attended
-        """
-        events_in_interval = list(
-            filter(
-                lambda x: x.event_date >= start_date and x.event_date <= end_date,
-                self.event_registrations,
-            )
-        )
-
-        if len(events_in_interval) == 0:
-            return None
-
-        return events_in_interval
-
-    def get_donations_for_interval(
-        self, start_date: datetime.date, end_date: datetime.date
-    ) -> list[Donation] | None:
-        """
-        For the interval determined by start_date and end_date,
-        find all donations made by this account.
-        """
-        donations_in_interval = list(
-            filter(
-                lambda x: x.date >= start_date and x.date <= end_date,
-                self.donations,
-            )
-        )
-
-        if len(donations_in_interval) == 0:
-            return None
-
-        return donations_in_interval
-
-    def get_membership_periods(
-        self,
-    ) -> dict[NeonMembershipType, dict[int, NeonMembership]]:
-        """
-        Find the intervals of all membership periods for the account for both monthly and annual
-        membership types.
-
-        Return value is of the form:
-
-        {
-            Annual: {
-                1: NeonMembership
-                2: NeonMembership
-            },
-            Monthly: {
-                1: NeonMembership
-                2: NeonMembership
-                3: NeonMembership
-            }
-        }
-
-        Where either annual or monthly could be None.
-        """
-        intervals = {}
-
-        for mem_type in NeonMembershipType:
-            filtered = [
-                membership
-                for membership in self.memberships
-                if membership.type == mem_type
-            ]
-
-            if len(filtered) > 0:
-                for i, membership in enumerate(filtered, 1):
-                    if not intervals.get(membership.type):
-                        intervals[membership.type] = {}
-                    intervals[membership.type][i] = membership
-
-        return intervals
-
-    def has_taken_classes(self) -> dict[Attended, bool]:
-        """
-        Determine if the user has taken the following classes:
-        - Woodshop Safety
-        - Metal Shop Safety
-        - Any CNC class
-        - Any lasers class
-        - Any 3dp class
-        """
-        attended = {
-            Attended.WSS: False,
-            Attended.MSS: False,
-            Attended.CNC: False,
-            Attended.LASERS: False,
-            Attended.PRINTING_3D: False,
-        }
-        if len(self.event_registrations) == 0:
-            return attended
-
-        for event in self.event_registrations:
-            cat = event.event_type.category
-            if cat == NeonEventCategory.WOODSHOP_SAFETY:
-                attended[Attended.WSS] = True
-            elif cat == NeonEventCategory.CNC:
-                attended[Attended.CNC] = True
-            elif cat == NeonEventCategory.LASERS:
-                attended[Attended.LASERS] = True
-            elif cat == NeonEventCategory.PRINTING_3D:
-                attended[Attended.PRINTING_3D] = True
-            elif "metal shop safety" in event.event_type.name.lower():
-                attended[Attended.MSS] = True
-
-        return attended
+@dataclass
+class AccountLocationInfo:
+    address: str | None
+    city: str | None
+    state: str | None
+    zip: str | None
 
     def get_distance_from_asmbly(
         self, gmaps: googlemaps.Client, asmbly_geocode
@@ -310,27 +135,136 @@ class NeonAccount:
 
         return {"distance": distance, "time": time}
 
-    def dollars_spent_in_period(self, membership: NeonMembership) -> float:
-        """Find the total dollar value of events, memberships, and donations in the period"""
-        start_date = membership.start_date
-        end_date = membership.end_date
 
-        events = self.get_classes_for_interval(start_date, end_date)
-        donations = self.get_donations_for_interval(start_date, end_date)
+@dataclass
+class AccountMembershipInfo:
+    memberships: list[NeonMembership]
+    family_membership: bool
+    current_membership_status: AccountCurrentMembershipStatus
 
-        total = float(0)
+    @property
+    def first_membership_start_date(self) -> datetime.date | None:
+        if self.memberships:
+            return self.memberships[0].start_date
+        return None
 
-        if events is not None:
-            for event in events:
-                total += event.registration_amount
+    @property
+    def has_annual_membership(self) -> bool:
+        return any(m.type == NeonMembershipType.ANNUAL for m in self.memberships)
 
-        if donations is not None:
-            for donation in donations:
-                total += donation.amount
+    @property
+    def membership_duration(self) -> int:
+        length = 0
+        for m in self.memberships:
+            if m.type == NeonMembershipType.MONTHLY:
+                length += 1
+                continue
+            if m.type == NeonMembershipType.ANNUAL:
+                length += 12
 
-        total += membership.price
+        return length
 
-        return total
+    def get_membership_periods(
+        self,
+    ) -> dict[NeonMembershipType, dict[int, NeonMembership]]:
+        """
+        Find the intervals of all membership periods for the account for both monthly and annual
+        membership types.
+
+        Return value is of the form:
+
+        {
+            Annual: {
+                1: NeonMembership
+                2: NeonMembership
+            },
+            Monthly: {
+                1: NeonMembership
+                2: NeonMembership
+                3: NeonMembership
+            }
+        }
+
+        Where either annual or monthly could be None.
+        """
+        intervals = {}
+
+        for mem_type in NeonMembershipType:
+            filtered = [
+                membership
+                for membership in self.memberships
+                if membership.type == mem_type
+            ]
+
+            if len(filtered) > 0:
+                for i, membership in enumerate(filtered, 1):
+                    if not intervals.get(membership.type):
+                        intervals[membership.type] = {}
+                    intervals[membership.type][i] = membership
+
+        return intervals
+
+
+class AccountEventInfo:
+    def __init__(self, event_registrations: list[NeonEventRegistration]):
+        self.event_registrations = event_registrations
+
+    @property
+    def total_classes_attended(self) -> int:
+        return len(self.event_registrations)
+
+    def get_classes_for_interval(
+        self, start_date: datetime.date, end_date: datetime.date
+    ) -> list[NeonEventRegistration] | None:
+        """
+        For the interval determined by start_date and end_date,
+        find the number of classes of each category attended
+        """
+        events_in_interval = list(
+            filter(
+                lambda x: x.event_date >= start_date and x.event_date <= end_date,
+                self.event_registrations,
+            )
+        )
+
+        if len(events_in_interval) == 0:
+            return None
+
+        return events_in_interval
+
+    def has_taken_classes(self) -> dict[Attended, bool]:
+        """
+        Determine if the user has taken the following classes:
+        - Woodshop Safety
+        - Metal Shop Safety
+        - Any CNC class
+        - Any lasers class
+        - Any 3dp class
+        """
+        attended = {
+            Attended.WSS: False,
+            Attended.MSS: False,
+            Attended.CNC: False,
+            Attended.LASERS: False,
+            Attended.PRINTING_3D: False,
+        }
+        if len(self.event_registrations) == 0:
+            return attended
+
+        for event in self.event_registrations:
+            cat = event.event_type.category
+            if cat == NeonEventCategory.WOODSHOP_SAFETY:
+                attended[Attended.WSS] = True
+            elif cat == NeonEventCategory.CNC:
+                attended[Attended.CNC] = True
+            elif cat == NeonEventCategory.LASERS:
+                attended[Attended.LASERS] = True
+            elif cat == NeonEventCategory.PRINTING_3D:
+                attended[Attended.PRINTING_3D] = True
+            elif "metal shop safety" in event.event_type.name.lower():
+                attended[Attended.MSS] = True
+
+        return attended
 
     def classes_by_category_in_period(
         self,
@@ -350,3 +284,96 @@ class NeonAccount:
         events_by_category.update(cats)
 
         return events_by_category
+
+
+class AccountDonationInfo:
+    def __init__(self, donations: list[Donation]):
+        self.donations = donations
+
+    def get_donations_for_interval(
+        self, start_date: datetime.date, end_date: datetime.date
+    ) -> list[Donation] | None:
+        """
+        For the interval determined by start_date and end_date,
+        find all donations made by this account.
+        """
+        donations_in_interval = list(
+            filter(
+                lambda x: x.date >= start_date and x.date <= end_date,
+                self.donations,
+            )
+        )
+
+        if len(donations_in_interval) == 0:
+            return None
+
+        return donations_in_interval
+
+
+@dataclass
+class NeonAccount:
+    basic_info: BasicAccountInfo
+    location_info: AccountLocationInfo
+    membership_info: AccountMembershipInfo
+    event_info: AccountEventInfo
+    donation_info: AccountDonationInfo
+
+    def total_dollars_spent(self) -> float:
+        """Find the total dollar value of events, memberships, and donations"""
+        mem_sum, event_sum, donation_sum = 0, 0, 0
+        if memberships := self.membership_info.memberships:
+            mem_sum = sum(
+                m.price
+                for m in memberships
+                if m.status == NeonMembershipStatus.SUCCEEDED
+            )
+        if registrations := self.event_info.event_registrations:
+            event_sum = sum(
+                r.registration_amount
+                for r in registrations
+                if r.registration_status == NeonEventRegistrationStatus.SUCCEEDED
+            )
+        if donations := self.donation_info.donations:
+            donation_sum = sum(d.amount for d in donations)
+        return mem_sum + event_sum + donation_sum
+
+    def get_classes_before_first_membership(self) -> int:
+        """
+        Return a count of all classes attended before the start of the first membership.
+
+        If acct has no memberships, return a count of all classes attended.
+        """
+        first_mem = self.membership_info.first_membership_start_date
+
+        if not first_mem:
+            return len(self.event_info.event_registrations)
+
+        events_attended = list(
+            filter(
+                lambda x: x.event_date < first_mem, self.event_info.event_registrations
+            )
+        )
+
+        return len(events_attended)
+
+    def dollars_spent_in_period(self, membership: NeonMembership) -> float:
+        """Find the total dollar value of events, memberships, and donations in the period"""
+        start_date = membership.start_date
+        end_date = membership.end_date
+
+        events = self.event_info.get_classes_for_interval(start_date, end_date)
+        donations = self.donation_info.get_donations_for_interval(start_date, end_date)
+
+        total = float(0)
+
+        if events is not None:
+            for event in events:
+                total += event.registration_amount
+
+        if donations is not None:
+            for donation in donations:
+                total += donation.amount
+
+        total += membership.price
+
+        return total

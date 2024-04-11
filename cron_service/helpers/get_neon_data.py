@@ -23,6 +23,11 @@ from helpers.neon_dataclasses import (
     NeonMembership,
     NeonEventRegistration,
     NeonAccount,
+    AccountMembershipInfo,
+    AccountDonationInfo,
+    AccountEventInfo,
+    AccountLocationInfo,
+    BasicAccountInfo,
 )
 
 stored_events: dict[int, StoredNeonEvent] = {}
@@ -426,29 +431,49 @@ async def get_individual_account(
         )
         donations = tg.create_task(get_acct_donation_data(aio_session, neon_id))
 
-    return NeonAccount(
+    basic_info = BasicAccountInfo(
         neon_id=neon_id,
         first_name=first_name,
         last_name=last_name,
         email=email,
+        phone=phone,
         gender=gender,
         birthdate=birthdate,
-        city=city,
-        state=state,
-        zip=zip_code,
-        phone=phone,
-        address=street,
         referral_source=referral_source,
         openpath_id=openpath_id,
         discourse_id=discourse_id,
-        family_membership=family_membership,
         waiver_date=waiver_date,
         orientation_date=orientation_date,
         teacher=teacher,
         steward=steward,
         volunteer=volunteer,
-        current_membership_status=membership_status,
+    )
+
+    location_info = AccountLocationInfo(
+        city=city,
+        state=state,
+        zip=zip_code,
+        address=street,
+    )
+
+    membership_info = AccountMembershipInfo(
         memberships=memberships.result(),
-        event_registrations=event_registrations.result(),
+        family_membership=family_membership,
+        current_membership_status=membership_status,
+    )
+
+    donation_info = AccountDonationInfo(
         donations=donations.result(),
+    )
+
+    event_info = AccountEventInfo(
+        event_registrations=event_registrations.result(),
+    )
+
+    return NeonAccount(
+        basic_info=basic_info,
+        location_info=location_info,
+        membership_info=membership_info,
+        event_info=event_info,
+        donation_info=donation_info,
     )

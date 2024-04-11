@@ -50,40 +50,41 @@ def find_member_risk(
 def update_member_df(
     df: pd.DataFrame, acct: NeonAccount, gmaps: googlemaps.Client, asmbly_geocode: str
 ) -> pd.DataFrame:
-    attended = acct.has_taken_classes()
-    distances = acct.get_distance_from_asmbly(gmaps, asmbly_geocode)
+    attended = acct.event_info.has_taken_classes()
+    distances = acct.location_info.get_distance_from_asmbly(gmaps, asmbly_geocode)
 
-    df["neon_id"] = acct.neon_id
-    df["email"] = acct.email
-    df["first_name"] = acct.first_name
-    df["last_name"] = acct.last_name
-    df["has_op_id"] = acct.openpath_id is not None
-    df["has_discourse_id"] = acct.discourse_id is not None
-    df["age"] = acct.age
-    df["gender"] = acct.gender
-    df["referral_source"] = acct.referral_source
-    df["family_membership"] = acct.family_membership
-    df["waiver_signed"] = acct.waiver_date is not None
-    df["orientation_attended"] = acct.orientation_date is not None
+    df["neon_id"] = acct.basic_info.neon_id
+    df["email"] = acct.basic_info.email
+    df["first_name"] = acct.basic_info.first_name
+    df["last_name"] = acct.basic_info.last_name
+    df["has_op_id"] = acct.basic_info.openpath_id is not None
+    df["has_discourse_id"] = acct.basic_info.discourse_id is not None
+    df["age"] = acct.basic_info.age
+    df["gender"] = acct.basic_info.gender
+    df["referral_source"] = acct.basic_info.referral_source
+    df["family_membership"] = acct.membership_info.family_membership
+    df["waiver_signed"] = acct.basic_info.waiver_date is not None
+    df["orientation_attended"] = acct.basic_info.orientation_date is not None
     df["taken_MSS"] = attended[Attended.MSS]
     df["taken_WSS"] = attended[Attended.WSS]
     df["taken_cnc_class"] = attended[Attended.CNC]
     df["taken_lasers_class"] = attended[Attended.LASERS]
     df["taken_3dp_class"] = attended[Attended.PRINTING_3D]
-    df["teacher"] = acct.teacher
-    df["steward"] = acct.steward
+    df["teacher"] = acct.basic_info.teacher
+    df["steward"] = acct.basic_info.steward
     df["num_classes_before_joining"] = acct.get_classes_before_first_membership()
-    df["num_classes_attended"] = acct.total_classes_attended
-    df["total_dollars_spent"] = acct.total_dollars_spent
+    df["num_classes_attended"] = acct.event_info.total_classes_attended
+    df["total_dollars_spent"] = acct.total_dollars_spent()
     df["time_from_asmbly"] = distances["time"]
 
     cancelled = (
-        acct.current_membership_status == AccountCurrentMembershipStatus.INACTIVE
+        acct.membership_info.current_membership_status
+        == AccountCurrentMembershipStatus.INACTIVE
     )
 
     df["membership_cancelled"] = cancelled
-    df["annual_membership"] = acct.has_annual_membership
-    df["duration"] = acct.membership_duration
+    df["annual_membership"] = acct.membership_info.has_annual_membership
+    df["duration"] = acct.membership_info.membership_duration
 
     return df
 
@@ -96,8 +97,8 @@ def update_member_in_db(acct: NeonAccount, df: pd.DataFrame) -> None:
 
     zip_code = None
 
-    if acct.zip:
-        zip_code = pattern.match(acct.zip)
+    if acct.location_info.zip:
+        zip_code = pattern.match(acct.location_info.zip)
 
     if zip_code:
         zip_code = int(zip_code.group(1))
@@ -105,13 +106,13 @@ def update_member_in_db(acct: NeonAccount, df: pd.DataFrame) -> None:
     with Session(engine) as sql_session:
         stmt = pg_upsert(Member).values(
             zip_code=zip_code,
-            membership_duration=acct.membership_duration,
+            membership_duration=acct.membership_info.membership_duration,
             risk_score=churn_risk,
-            neon_id=int(acct.neon_id),
-            first_name=acct.first_name,
-            last_name=acct.last_name,
-            email=acct.email,
-            active=acct.current_membership_status
+            neon_id=int(acct.basic_info.neon_id),
+            first_name=acct.basic_info.first_name,
+            last_name=acct.basic_info.last_name,
+            email=acct.basic_info.email,
+            active=acct.membership_info.current_membership_status
             == AccountCurrentMembershipStatus.ACTIVE,
         )
 
