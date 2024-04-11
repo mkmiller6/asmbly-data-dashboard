@@ -1,8 +1,9 @@
 """Create the layout for the dashboard"""
 
-import polars as pl
-from dash import html, Dash
+from dash import html
 import dash_mantine_components as dmc
+from dash_data_dashboard.src.data.dash_data.loader import load_membership_data
+from engine import raw_uri
 from . import (
     churn_risk_table,
     header,
@@ -13,8 +14,10 @@ from . import (
 from .breakpoints import Breakpoint as bp
 
 
-def create_layout(app: Dash, source: pl.LazyFrame) -> html.Div:
+def create_layout() -> html.Div:
     """Create the layout of the dashboard"""
+
+    source = load_membership_data(raw_uri)
 
     return dmc.MantineProvider(
         theme={
@@ -35,7 +38,7 @@ def create_layout(app: Dash, source: pl.LazyFrame) -> html.Div:
                 px=10,
                 mb=40,
                 children=[
-                    header.render(app),
+                    header.render(),
                     dmc.Grid(
                         mt=85,
                         gutter="md",
@@ -43,7 +46,7 @@ def create_layout(app: Dash, source: pl.LazyFrame) -> html.Div:
                             dmc.Col(
                                 span=9,
                                 children=[
-                                    churn_risk_table.render(app),
+                                    churn_risk_table.render(),
                                 ],
                             ),
                             dmc.Col(
@@ -53,13 +56,14 @@ def create_layout(app: Dash, source: pl.LazyFrame) -> html.Div:
                                         [
                                             active_members_card.render(source),
                                             churns_and_joins.render(source),
-                                        ]
+                                        ],
+                                        h=796,
                                     )
                                 ],
                             ),
                             dmc.Col(
                                 span=12,
-                                children=[active_members_plot.render(app, source)],
+                                children=[active_members_plot.render(source)],
                             ),
                         ],
                     ),

@@ -1,11 +1,11 @@
 """Render the app header"""
 
+import dash
 import dash_mantine_components as dmc
-from dash import Dash
 from .breakpoints import Breakpoint as bp
 
 
-def create_header_content(app: Dash) -> dmc.Group:
+def create_header_content() -> dmc.Group:
     """Create the header content"""
 
     return dmc.Group(
@@ -25,7 +25,7 @@ def create_header_content(app: Dash) -> dmc.Group:
                         target="_blank",
                     ),
                     dmc.Title(
-                        app.title,
+                        dash.get_app().title,
                         order=2,
                         weight=500,
                         color="#2b2c6b",
@@ -39,7 +39,7 @@ def create_header_content(app: Dash) -> dmc.Group:
     )
 
 
-def render(app: Dash) -> dmc.Header:
+def render() -> dmc.Header:
     """Render the app header"""
 
     return dmc.Header(
@@ -54,13 +54,13 @@ def render(app: Dash) -> dmc.Header:
         },
         children=[
             dmc.MediaQuery(
-                create_header_content(app),
+                create_header_content(),
                 smallerThan="md",
                 styles={"display": "none"},
                 innerBoxStyle={"width": bp.xxl},
             ),
             dmc.MediaQuery(
-                create_header_content(app),
+                create_header_content(),
                 largerThan="md",
                 styles={"display": "none"},
                 innerBoxStyle={"width": "100%"},

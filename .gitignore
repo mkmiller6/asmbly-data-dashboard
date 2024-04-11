@@ -29,3 +29,6 @@ secrets
 
 # Diskcache files
 cache
+
+# pkl files
+*.pkl

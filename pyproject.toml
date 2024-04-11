@@ -31,6 +31,9 @@ python-dotenv = "^1.0.1"
 [tool.poetry.group.cron_service.dependencies]
 googlemaps = "^4.10.0"
 aiohttp = "^3.9.3"
+cmake = "^3.29.0.1"
+scikit-learn = "1.2.2"
+scikit-survival = "0.21.0"
 
 [build-system]
 requires = ["poetry-core"]
