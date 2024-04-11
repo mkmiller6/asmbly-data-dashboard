@@ -4,11 +4,13 @@ import os
 from dash import Dash, CeleryManager
 from celery import Celery
 from dash_data_dashboard.src.components.layout import create_layout
-from dash_data_dashboard.src.data.dash_data.loader import load_membership_data
-from engine import raw_uri
 
 APP_TITLE = "Data Dashboard"
 DATA_PATH = "./dash_data_dashboard/src/data/asmbly_churn_risk.csv"
+
+
+def serve_layout():
+    return create_layout()
 
 
 celery_app = Celery(
@@ -18,8 +20,6 @@ celery_app = Celery(
 )
 
 callback_manager = CeleryManager(celery_app)
-
-data = load_membership_data(raw_uri)
 
 app = Dash(
     __name__,
@@ -31,7 +31,7 @@ app = Dash(
     background_callback_manager=callback_manager,
 )
 app.title = APP_TITLE
-app.layout = create_layout(app, data)
+app.layout = serve_layout
 
 server = app.server
 

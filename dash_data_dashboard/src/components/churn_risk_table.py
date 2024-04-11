@@ -2,7 +2,7 @@
 
 import math
 import polars as pl
-from dash import html, Dash, dash_table, Input, Output
+from dash import html, dash_table, Input, Output, callback
 import dash_mantine_components as dmc
 from engine import raw_uri
 from .ids import Ids
@@ -18,123 +18,8 @@ from . import (
 PAGE_SIZE = 15
 
 
-def render(app: Dash) -> dmc.Card:
+def render() -> dmc.Card:
     """Render the churn risk table"""
-
-    @app.callback(
-        Output(Ids.CHURN_DATA_TABLE, "data"),
-        Output(Ids.CHURN_DATA_TABLE, "columns"),
-        Output(Ids.CHURN_DATA_TABLE, "page_count"),
-        Input(Ids.CHURN_DATA_TABLE, "page_current"),
-        Input(Ids.CHURN_DATA_TABLE, "page_size"),
-        Input(Ids.CHURN_DATA_TABLE_FILTER, "checked"),
-        Input(Ids.CHURN_DATA_TABLE_SORT_BY, "value"),
-        Input(Ids.CHURN_DATA_TABLE_SORT_DIR, "value"),
-        Input(Ids.CHURN_DATA_TABLE_SEARCH, "value"),
-    )
-    def update_churn_table(
-        page_current: int,
-        page_size: int,
-        show_emailed: bool,
-        sort_by: str,
-        sort_dir: str,
-        search: str,
-    ) -> html.Div:
-
-        search = search.lower()
-
-        sort_mapping = {
-            "Name": "first_name",
-            "Email Address": "email",
-            "Neon ID": "neon_id",
-            "Churn Risk": "risk_score",
-            "Emailed": "emailed",
-        }
-
-        query = f"""
-        SELECT neon_id, first_name, last_name, email, risk_score, emailed, last_emailed
-        FROM member
-        WHERE active = true {"AND emailed = false" if not show_emailed else ""}
-        ORDER BY {sort_mapping.get(sort_by, "risk_score")} {sort_dir.upper()}
-        """
-
-        uri = raw_uri
-
-        result_df = (
-            pl.read_database_uri(query, uri)
-            .lazy()
-            .select(
-                (
-                    pl.format(
-                        "[{}](https://asmbly.app.neoncrm.com/admin/accounts/{}/about)",
-                        pl.col("neon_id"),
-                        pl.col("neon_id"),
-                    )
-                ).alias("Neon ID"),
-                (pl.col("first_name") + " " + pl.col("last_name")).alias("Name"),
-                pl.col("email").alias("Email Address"),
-                pl.col("risk_score").round(3).alias("Churn Risk"),
-                pl.when(pl.col("emailed") == True)
-                .then(pl.lit("Yes"))
-                .otherwise(pl.lit("No"))
-                .alias("Emailed"),
-                pl.col("last_emailed").alias("Last Emailed"),
-            )
-            .filter(
-                pl.col("Name").str.to_lowercase().str.contains(search, literal=True)
-                | pl.col("Email Address").str.contains(search, literal=True)
-                | pl.col("Neon ID").str.contains(search, literal=True)
-            )
-        )
-
-        paged_df = result_df.slice(
-            offset=page_current * page_size, length=page_size
-        ).collect()
-
-        data = paged_df.to_dicts()
-
-        cols = [
-            {
-                "name": "Neon ID",
-                "id": "Neon ID",
-                "presentation": "markdown",
-            },
-        ]
-
-        middle_cols = [
-            {"name": i, "id": i}
-            for i in paged_df.select(
-                pl.all().exclude(["Emailed", "Last Emailed", "Neon ID"])
-            ).columns
-        ]
-
-        append = [
-            {
-                "name": "Emailed",
-                "id": "Emailed",
-                "presentation": "dropdown",
-            },
-            {
-                "name": "Last Emailed",
-                "id": "Last Emailed",
-                "type": "datetime",
-                "on_change": {
-                    "action": "coerce",
-                    "failure": "default",
-                },
-                "validation": {
-                    "default": None,
-                },
-            },
-        ]
-        for col in middle_cols, append:
-            cols.append(col[0])
-            cols.append(col[1])
-
-        items = result_df.select(pl.count()).collect().item()
-        page_count = 1 if items == 0 else math.ceil(items / PAGE_SIZE)
-
-        return data, cols, page_count
 
     return dmc.Card(
         id=Ids.CHURN_DATA_TABLE_CONTAINER,
@@ -190,6 +75,123 @@ def render(app: Dash) -> dmc.Card:
                     "fontSize": "20px",
                 },
             ),
-            churn_table_submit.render(app),
+            churn_table_submit.render(),
         ],
     )
+
+
+@callback(
+    Output(Ids.CHURN_DATA_TABLE, "data"),
+    Output(Ids.CHURN_DATA_TABLE, "columns"),
+    Output(Ids.CHURN_DATA_TABLE, "page_count"),
+    Input(Ids.CHURN_DATA_TABLE, "page_current"),
+    Input(Ids.CHURN_DATA_TABLE, "page_size"),
+    Input(Ids.CHURN_DATA_TABLE_FILTER, "checked"),
+    Input(Ids.CHURN_DATA_TABLE_SORT_BY, "value"),
+    Input(Ids.CHURN_DATA_TABLE_SORT_DIR, "value"),
+    Input(Ids.CHURN_DATA_TABLE_SEARCH, "value"),
+)
+def update_churn_table(
+    page_current: int,
+    page_size: int,
+    show_emailed: bool,
+    sort_by: str,
+    sort_dir: str,
+    search: str,
+) -> html.Div:
+
+    search = search.lower()
+
+    sort_mapping = {
+        "Name": "first_name",
+        "Email Address": "email",
+        "Neon ID": "neon_id",
+        "Churn Risk": "risk_score",
+        "Emailed": "emailed",
+    }
+
+    query = f"""
+    SELECT neon_id, first_name, last_name, email, risk_score, emailed, last_emailed
+    FROM member
+    WHERE active = true {"AND emailed = false" if not show_emailed else ""}
+    ORDER BY {sort_mapping.get(sort_by, "risk_score")} {sort_dir.upper()}
+    """
+
+    uri = raw_uri
+
+    result_df = (
+        pl.read_database_uri(query, uri)
+        .lazy()
+        .select(
+            (
+                pl.format(
+                    "[{}](https://asmbly.app.neoncrm.com/admin/accounts/{}/about)",
+                    pl.col("neon_id"),
+                    pl.col("neon_id"),
+                )
+            ).alias("Neon ID"),
+            (pl.col("first_name") + " " + pl.col("last_name"))
+            .str.to_titlecase()
+            .alias("Name"),
+            pl.col("email").alias("Email Address"),
+            pl.col("risk_score").round(3).alias("Churn Risk"),
+            pl.when(pl.col("emailed") == True)
+            .then(pl.lit("Yes"))
+            .otherwise(pl.lit("No"))
+            .alias("Emailed"),
+            pl.col("last_emailed").alias("Last Emailed"),
+        )
+        .filter(
+            pl.col("Name").str.to_lowercase().str.contains(search, literal=True)
+            | pl.col("Email Address").str.contains(search, literal=True)
+            | pl.col("Neon ID").str.contains(search, literal=True)
+        )
+    )
+
+    paged_df = result_df.slice(
+        offset=page_current * page_size, length=page_size
+    ).collect()
+
+    data = paged_df.to_dicts()
+
+    cols = [
+        {
+            "name": "Neon ID",
+            "id": "Neon ID",
+            "presentation": "markdown",
+        },
+    ]
+
+    middle_cols = [
+        {"name": i, "id": i}
+        for i in paged_df.select(
+            pl.all().exclude(["Emailed", "Last Emailed", "Neon ID"])
+        ).columns
+    ]
+
+    append = [
+        {
+            "name": "Emailed",
+            "id": "Emailed",
+            "presentation": "dropdown",
+        },
+        {
+            "name": "Last Emailed",
+            "id": "Last Emailed",
+            "type": "datetime",
+            "on_change": {
+                "action": "coerce",
+                "failure": "default",
+            },
+            "validation": {
+                "default": None,
+            },
+        },
+    ]
+    for col in middle_cols, append:
+        cols.extend(col)
+
+    items = result_df.select(pl.count()).collect().item()
+    page_count = 1 if items == 0 else math.ceil(items / PAGE_SIZE)
+
+    return data, cols, page_count

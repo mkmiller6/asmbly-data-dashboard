@@ -2,11 +2,11 @@ import datetime
 import plotly.express as px
 import dash_mantine_components as dmc
 import polars as pl
-from dash import Dash, dcc
+from dash import dcc
 from .ids import Ids
 
 
-def render(app: Dash, source: pl.LazyFrame) -> dmc.Card:
+def render(source: pl.LazyFrame) -> dmc.Card:
     """Render the active members plot"""
 
     data = (
