@@ -4,6 +4,7 @@ RUN apt-get update && apt-get -y install cron
 
 ENV POETRY_NO_INTERACTION=1 \
     POETRY_VIRTUALENVS_CREATE=0 \
+    POETRY_REQUESTS_TIMEOUT=60 \
     POETRY_HOME=/opt/poetry \
     PYTHONUNBUFFERED=1
 
@@ -26,4 +27,8 @@ RUN chmod 0644 /etc/cron.d/crontab
 
 RUN /usr/bin/crontab /etc/cron.d/crontab
 
-ENTRYPOINT ["cron", "-f", "-l", "8"]
+COPY ./cron_service/entrypoint.sh /entrypoint.sh
+
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
