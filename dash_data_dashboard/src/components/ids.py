@@ -18,3 +18,6 @@ class Ids(StrEnum):
 
     ACTIVE_MEMBERS_PLOT = "active-members-plot"
     ACTIVE_MEMBERS_PLOT_DATE_RANGE = "active-members-plot-date-range"
+
+    ZCTA_CHLOROPLETH = "zcta-chloropleth"
+    ZCTA_MULTISELECT = "zcta-multiselect"
