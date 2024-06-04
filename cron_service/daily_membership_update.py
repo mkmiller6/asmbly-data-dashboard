@@ -13,7 +13,7 @@ from helpers.get_neon_data import (
 )
 
 from engine import engine
-from schema import MembershipCount
+from schema import MembershipCount, Member
 
 
 async def get_active_members_count(session: aiohttp.ClientSession) -> int:
@@ -148,16 +148,15 @@ async def get_churns_and_signups_count(
         }
     )
 
-    churn_count = 0
-    member_signups_count = 0
-
     async for page in get_all_accounts(session, churns, ["Account ID"]):
         if page["pagination"]["currentPage"] < page["pagination"]["totalPages"]:
             accts = page["searchResults"]
         else:
             break
 
-        churn_count += len(accts)
+        churns = [a["Account ID"] for a in accts]
+
+    member_signups = []
 
     async for page in get_all_accounts(session, joins, ["Account ID"]):
         if page["pagination"]["currentPage"] < page["pagination"]["totalPages"]:
@@ -169,18 +168,18 @@ async def get_churns_and_signups_count(
             memberships = await get_acct_membership_data(session, acct["Account ID"])
 
             if len(memberships) == 1:
-                member_signups_count += 1
+                member_signups.append(acct["Account ID"])
                 continue
 
             if memberships[-1].start_date - memberships[
                 -2
             ].end_date > datetime.timedelta(days=1):
-                member_signups_count += 1
+                member_signups.append(acct["Account ID"])
 
-    return (churn_count, member_signups_count)
+    return (churns, member_signups)
 
 
-async def get_daily_count() -> dict[str, int]:
+async def get_daily_count() -> tuple[dict[str, int], tuple[list[str], list[str]]]:
     async with aiohttp.ClientSession(headers=N_HEADERS, base_url=N_BASE_URL) as session:
 
         async with asyncio.TaskGroup() as tg:
@@ -193,12 +192,12 @@ async def get_daily_count() -> dict[str, int]:
 
     new_counts = {
         "total_active_count": active_members_count.result(),
-        "churn_count": churns_and_signups[0],
-        "member_signups_count": churns_and_signups[1],
+        "churn_count": len(churns_and_signups[0]),
+        "member_signups_count": len(churns_and_signups[1]),
         "acct_signups_count": acct_signups_count.result(),
     }
 
-    return new_counts
+    return (new_counts, churns_and_signups)
 
 
 def update_membership_table(
@@ -228,10 +227,44 @@ def update_membership_table(
         session.commit()
 
 
+def update_member_table(
+    sql_engine: sqlalchemy.Engine,
+    churns: list[str],
+    joins: list[str],
+) -> None:
+    """Update the database with today's member counts"""
+
+    churns = [{"neon_id": int(id_), "active": False} for id_ in churns]
+    joins = [{"neon_id": int(id_), "active": True} for id_ in joins]
+
+    with Session(sql_engine) as session:
+
+        if churns:
+            stmt = sqlalchemy.update(Member)
+
+            session.execute(stmt, churns)
+            session.commit()
+
+        # if joins:
+        #     stmt = pg_upsert(Member).values(joins)
+
+        #     stmt = stmt.on_conflict_do_update(
+        #         index_elements=[Member.neon_id],
+        #         set_={
+        #             Member.active: stmt.excluded.active,
+        #         },
+        #     )
+        #     session.execute(stmt)
+
+
 def main() -> None:
-    daily_count = asyncio.run(get_daily_count())
+    daily_count, daily_churns_and_signups = asyncio.run(get_daily_count())
 
     update_membership_table(engine, daily_count)
+
+    update_member_table(
+        engine, daily_churns_and_signups[0], daily_churns_and_signups[1]
+    )
 
 
 if __name__ == "__main__":

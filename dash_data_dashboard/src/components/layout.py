@@ -11,6 +11,7 @@ from . import (
     churns_and_joins,
     active_members_plot,
     zcta_chloropleth,
+    churns_and_joins_plot,
 )
 from .breakpoints import Breakpoint as bp
 
@@ -64,11 +65,15 @@ def create_layout() -> html.Div:
                             ),
                             dmc.Col(
                                 span=12,
-                                children=[active_members_plot.render(source)],
+                                children=[churns_and_joins_plot.render(source)],
                             ),
                             dmc.Col(
                                 span=6,
                                 children=[zcta_chloropleth.render()],
+                            ),
+                            dmc.Col(
+                                span=6,
+                                children=[active_members_plot.render(source)],
                             ),
                         ],
                     ),

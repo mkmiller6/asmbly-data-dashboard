@@ -19,5 +19,8 @@ class Ids(StrEnum):
     ACTIVE_MEMBERS_PLOT = "active-members-plot"
     ACTIVE_MEMBERS_PLOT_DATE_RANGE = "active-members-plot-date-range"
 
+    CHURNS_AND_JOINS_PLOT = "churns-and-joins-plot"
+    CHURNS_AND_JOINS_PLOT_AVG = "churns-and-join-plot-avg"
+
     ZCTA_CHLOROPLETH = "zcta-chloropleth"
     ZCTA_MULTISELECT = "zcta-multiselect"

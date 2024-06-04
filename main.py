@@ -3,14 +3,15 @@
 import os
 from dash import Dash, CeleryManager
 from celery import Celery
+from dash_auth import OIDCAuth
 from dash_data_dashboard.src.components.layout import create_layout
 
 APP_TITLE = "Data Dashboard"
 DATA_PATH = "./dash_data_dashboard/src/data/asmbly_churn_risk.csv"
 
 
-def serve_layout():
-    return create_layout()
+# def serve_layout():
+#     return create_layout(geojson)
 
 
 celery_app = Celery(
@@ -30,8 +31,17 @@ app = Dash(
     ],
     background_callback_manager=callback_manager,
 )
+auth = OIDCAuth(app, secret_key=os.environ["DASH_OIDC_SECRET"])
+auth.register_provider(
+    "google-oidc",
+    token_endpoint_auth_method="client_secret_post",
+    client_id=os.environ["OIDC_CLIENT_ID"],
+    client_secret=os.environ["OIDC_CLIENT_SECRET"],
+    server_metadata_url=os.environ["OIDC_DISCOVERY_DOC"],
+)
+
 app.title = APP_TITLE
-app.layout = serve_layout
+app.layout = create_layout()
 
 server = app.server
 

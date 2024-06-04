@@ -59,7 +59,7 @@ def render() -> dmc.Card:
                 style_cell={
                     "whiteSpace": "normal",
                     "height": "auto",
-                    "lineHeight": "15px",
+                    "lineHeight": "17.5px",
                     "fontSize": "15px",
                     "fontFamily": "'Inter', sans-serif",
                     "textAlign": "left",

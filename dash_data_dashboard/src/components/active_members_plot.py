@@ -38,8 +38,12 @@ def render(source: pl.LazyFrame) -> dmc.Card:
             "x": "Date",
             "y": "Active Paying Members",
         },
-        markers=True,
+        markers=False,
     )
+
+    fig.update_traces(line_color="#1f77b4")
+
+    fig.update_layout(plot_bgcolor="white")
 
     fig.update_xaxes(
         rangeslider_visible=True,
@@ -55,7 +59,14 @@ def render(source: pl.LazyFrame) -> dmc.Card:
             )
         ),
         range=date_range,
+        gridcolor="lightgrey",
+        showline=True,
+        linecolor="black",
+        ticks="outside",
+        tickcolor="lightgrey",
     )
+
+    fig.update_yaxes(gridcolor="lightgrey", autorange=True, fixedrange=False)
 
     return dmc.Card(
         radius="md",

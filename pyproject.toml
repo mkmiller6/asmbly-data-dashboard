@@ -18,6 +18,9 @@ sqlalchemy = "^2.0.29"
 redis = {extras = ["hiredis"], version = "^5.0.3"}
 psycopg = {extras = ["binary", "pool"], version = "^3.1.18"}
 statsmodels = "^0.14.1"
+dash-auth = "^2.3.0"
+requests = {extras = ["security"], version = "^2.32.1"}
+authlib = "^1.3.0"
 
 
 [tool.poetry.group.dev.dependencies]

@@ -21,7 +21,8 @@ def render(source: pl.LazyFrame) -> dmc.Card:
         )
     except ValueError:
         active_yesterday = (
-            source.select(pl.col("total_active_count").first())
+            source.filter(pl.col("total_active_count") != 0)
+            .select(pl.col("total_active_count").first())
             .collect()
             .get_column("total_active_count")
             .item()
@@ -38,9 +39,12 @@ def render(source: pl.LazyFrame) -> dmc.Card:
             .get_column("total_active_count")
             .item()
         )
+        if active_two_days_ago == 0:
+            raise ValueError
     except ValueError:
         active_two_days_ago = (
-            source.select(pl.col("total_active_count").limit(2).last())
+            source.filter(pl.col("total_active_count") != 0)
+            .select(pl.col("total_active_count").limit(2).last())
             .collect()
             .get_column("total_active_count")
             .item()
@@ -57,9 +61,12 @@ def render(source: pl.LazyFrame) -> dmc.Card:
             .get_column("total_active_count")
             .item()
         )
+        if active_month_ago == 0:
+            raise ValueError
     except ValueError:
         active_month_ago = (
-            source.select(pl.col("total_active_count").limit(30).last())
+            source.filter(pl.col("total_active_count") != 0)
+            .select(pl.col("total_active_count").limit(30).last())
             .collect()
             .get_column("total_active_count")
             .item()
@@ -76,9 +83,12 @@ def render(source: pl.LazyFrame) -> dmc.Card:
             .get_column("total_active_count")
             .item()
         )
+        if active_year_ago == 0:
+            raise ValueError
     except ValueError:
         active_year_ago = (
-            source.select(pl.col("total_active_count").limit(365).last())
+            source.filter(pl.col("total_active_count") != 0)
+            .select(pl.col("total_active_count").limit(365).last())
             .collect()
             .get_column("total_active_count")
             .item()
