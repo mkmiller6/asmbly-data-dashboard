@@ -167,7 +167,7 @@ def write_db_from_csv(table_name: str, db_uri: str) -> None:
     data = join_dataframes(sub_data, account_creations, churns, joins)
 
     data.write_database(
-        table_name=table_name, connection=db_uri, if_table_exists="replace"
+        table_name=table_name, connection=db_uri, if_table_exists="append"
     )
 
     # print(data)

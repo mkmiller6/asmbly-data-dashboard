@@ -2,7 +2,7 @@ import datetime
 import plotly.express as px
 import dash_mantine_components as dmc
 import polars as pl
-from dash import dcc
+from dash import dcc, html
 from .ids import Ids
 
 
@@ -72,13 +72,24 @@ def render(source: pl.LazyFrame) -> dmc.Card:
         radius="md",
         shadow="md",
         withBorder=True,
+        h=602,
         children=[
-            dmc.Text(
-                "Active Members Over Time",
-                size="lg",
-                mb=15,
+            dmc.Stack(
+                h="100%",
+                justify="space-between",
+                children=[
+                    html.Div(
+                        children=[
+                            dmc.Text(
+                                "Active Members Over Time",
+                                size="lg",
+                                mb=15,
+                            ),
+                            dmc.Divider(mb=15),
+                        ],
+                    ),
+                    dcc.Graph(id=Ids.ACTIVE_MEMBERS_PLOT, figure=fig),
+                ],
             ),
-            dmc.Divider(mb=15),
-            dcc.Graph(id=Ids.ACTIVE_MEMBERS_PLOT, figure=fig),
         ],
     )

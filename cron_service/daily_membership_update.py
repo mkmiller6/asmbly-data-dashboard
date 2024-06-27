@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import aiohttp
+import logging
 
 import sqlalchemy
 from sqlalchemy.orm import Session
@@ -258,6 +259,14 @@ def update_member_table(
 
 
 def main() -> None:
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)-8s %(message)s",
+        level=logging.INFO,
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
+    logging.info("Beginning daily membership updates for %s", datetime.date.today())
+
     daily_count, daily_churns_and_signups = asyncio.run(get_daily_count())
 
     update_membership_table(engine, daily_count)

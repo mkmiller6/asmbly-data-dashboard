@@ -2,6 +2,7 @@
 
 import asyncio
 import datetime
+import logging
 import os
 import re
 import aiohttp
@@ -133,6 +134,13 @@ def update_member_in_db(acct: NeonAccount, df: pd.DataFrame) -> None:
 
 
 async def main() -> None:
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)-8s %(message)s",
+        level=logging.INFO,
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
+    logging.info("Beginning daily member risk updates for %s", datetime.date.today())
 
     requests_session = requests.Session()
     gmaps = googlemaps.Client(

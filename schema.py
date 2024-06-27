@@ -44,7 +44,7 @@ class MembershipCount(Base):
     acct_signups_count: Mapped[Optional[int]]
     member_signups_count: Mapped[Optional[int]]
     churn_count: Mapped[Optional[int]]
-    id: Mapped[int] = mapped_column(init=False, primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
     date: Mapped[datetime.date] = mapped_column(Date, unique=True)
 
 

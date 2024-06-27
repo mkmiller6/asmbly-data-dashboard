@@ -38,6 +38,7 @@ auth.register_provider(
     client_id=os.environ["OIDC_CLIENT_ID"],
     client_secret=os.environ["OIDC_CLIENT_SECRET"],
     server_metadata_url=os.environ["OIDC_DISCOVERY_DOC"],
+    client_kwargs={"scope": "openid profile email"},
 )
 
 app.title = APP_TITLE

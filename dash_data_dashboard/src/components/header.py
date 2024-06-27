@@ -2,7 +2,21 @@
 
 import dash
 import dash_mantine_components as dmc
+from dash_auth import get_oauth
+from dash_iconify import DashIconify
 from .breakpoints import Breakpoint as bp
+
+
+def get_user_profile_pic():
+    oauth_client = get_oauth(dash.get_app())
+
+    client = oauth_client.create_client("google-oidc")
+
+    user = client.get("userinfo")
+
+    # user = token.get("userinfo")
+
+    return user
 
 
 def create_header_content() -> dmc.Group:
@@ -34,7 +48,23 @@ def create_header_content() -> dmc.Group:
                 spacing="xl",
                 position="left",
             ),
-            dmc.Avatar("MM", radius="xl", color="#2b2c6b"),
+            dmc.Menu(
+                [
+                    dmc.MenuTarget(dmc.Avatar("", radius="xl", color="#2b2c6b")),
+                    dmc.MenuDropdown(
+                        [
+                            dmc.MenuItem(
+                                "Logout",
+                                href="/oidc/logout",
+                                refresh=True,
+                                icon=DashIconify(icon="tabler:logout"),
+                            )
+                        ]
+                    ),
+                ],
+                style={"cursor": "pointer"},
+                trigger="hover",
+            ),
         ],
     )
 

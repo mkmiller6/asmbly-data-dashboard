@@ -13,7 +13,7 @@ def render() -> MultiSelect:
         data=[
             {"value": "active", "label": "Active"},
             {"value": "inactive", "label": "Inactive"},
-            {"value": "never_joined", "label": "Never Joined"},
+            # {"value": "never_joined", "label": "Never Joined"},
         ],
         style={
             "width": "400px",

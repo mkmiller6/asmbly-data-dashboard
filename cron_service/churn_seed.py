@@ -17,6 +17,7 @@ def load_data_from_csv(file_path: str) -> pl.DataFrame:
             pl.col("email"),
             pl.col("risk_score"),
             pl.col("duration").alias("membership_duration"),
+            (pl.col("membership_cancelled") == False).alias("active"),
         )
         .collect()
     )

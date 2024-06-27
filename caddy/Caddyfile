@@ -2,7 +2,7 @@
     email {$CADDY_EMAIL}
 }
 
-classes.asmbly.org {
+dashboard.asmbly.org {
     reverse_proxy app:8000
     header {
         # enable HSTS

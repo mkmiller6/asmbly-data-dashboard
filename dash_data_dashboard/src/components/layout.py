@@ -44,6 +44,7 @@ def create_layout() -> html.Div:
                     dmc.Grid(
                         mt=85,
                         gutter="md",
+                        align="stretch",
                         children=[
                             dmc.Col(
                                 span=9,

@@ -39,7 +39,7 @@ def update_chloropleth(mutliselect: list[str] | None) -> px.choropleth_mapbox:
 
     active = "active" in mutliselect
     inactive = "inactive" in mutliselect
-    never_joined = "never_joined" in mutliselect
+    # never_joined = "never_joined" in mutliselect
 
     query = """
         SELECT zip_code, active, membership_duration
@@ -71,12 +71,12 @@ def update_chloropleth(mutliselect: list[str] | None) -> px.choropleth_mapbox:
 
         zips_list.append(inactive_zips)
 
-    if never_joined:
-        never_joined_zips = zip_codes.filter(
-            (pl.col("active") == False) & (pl.col("membership_duration") == 0)
-        )
+    # if never_joined:
+    #     never_joined_zips = zip_codes.filter(
+    #         (pl.col("active") == False) & (pl.col("membership_duration") == 0)
+    #     )
 
-        zips_list.append(never_joined_zips)
+    #     zips_list.append(never_joined_zips)
 
     if zips_list:
         zips = (

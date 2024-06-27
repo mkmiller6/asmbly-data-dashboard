@@ -112,11 +112,11 @@ class AccountLocationInfo:
                 destination=asmbly_geocode,
                 mode="driving",
                 avoid="tolls",
-                departure_time=datetime.datetime.now(),
+                # departure_time=datetime.datetime.now(),
                 region="US",
                 language="en",
                 units="metric",
-                traffic_model="best_guess",
+                # traffic_model="best_guess",
             )
         except googlemaps.exceptions.ApiError as e:
             print(e)
@@ -128,10 +128,10 @@ class AccountLocationInfo:
             return {"distance": np.nan, "time": np.nan}
 
         distance = routes["legs"][0]["distance"]["value"]
-        try:
-            time = routes["legs"][0]["duration_in_traffic"]["value"]
-        except KeyError:
-            time = routes["legs"][0]["duration"]["value"]
+        # try:
+        # time = routes["legs"][0]["duration_in_traffic"]["value"]
+        # except KeyError:
+        time = routes["legs"][0]["duration"]["value"]
 
         return {"distance": distance, "time": time}
 
